@@ -5,4 +5,9 @@
 #ifndef SEMESTRALKA_SERVER_LOGIC_H
 #define SEMESTRALKA_SERVER_LOGIC_H
 
-#endif //SEMESTRALKA_SERVER_LOGIC_H
+#include "common.h"
+#include "ipc_shm.h"
+
+void spusti_server(ZdielaneData_t* shm);
+
+#endif
