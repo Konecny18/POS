@@ -3,8 +3,10 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include "headers/ipc_shm.h"
+#include <signal.h>
 
-//TODO pridat include pre logiku servera a klienta
+#include "headers/server_logic.h"
+#include "headers/client_logic.h"
 
 int main() {
     key_t key = 1234; //ten isty co som zadefinoval
@@ -15,6 +17,8 @@ int main() {
         fprintf(stderr,"Nepodarilo sa vytvorit SHM.\n");
         return -1;
     }
+
+    shm->stav = SIM_RUNNING; // musi byt nastaveny na 1 (bezi)
 
     //rozdelenie procesov
     pid_t pid = fork();
@@ -27,21 +31,11 @@ int main() {
 
     if (pid == 0) {
         //PROCES KLIENT(dieta)
-        //TODO volanie pre GUI vykreslovanie
-        printf("[KLIENT] Spusteny, cakam na data...\n");
-
-        //zatial len simulacia prace
-        sleep(2);
-
-        printf("[KLIENT] Koncim\n");
+        spusti_klienta(shm);
         exit(0);
     } else {
         //PROCES SERVER(rodic)
-        //TODO volanie logiky nahodnej pochodzky
-        printf("[SERVER] Spusteny, zacinam simulaciu...\n");
-
-        //zatial len simulacia prace
-        sleep(3);
+        spusti_server(shm);
 
         //pockam kym dieta(klient) skonci
         wait(NULL);

@@ -5,8 +5,11 @@
 #include "headers/ipc_shm.h"
 
 void spusti_server(ZdielaneData_t* shm) {
+    printf("[SERVER] Startujem slucku...\n");
     //inicializacia generatora
     srand(time(NULL));
+    int kroky = 0;
+    const int LIMIT_KROKOV = 10;
 
     //nastavenia PC stavu
     shm->riadky = SIM_RUNNING;
@@ -15,9 +18,16 @@ void spusti_server(ZdielaneData_t* shm) {
 
     printf("[SERVER] Simulacia zacina na pozicii [%d, %d]\n", shm->aktualna_pozicia_chodca.riadok, shm->aktualna_pozicia_chodca.stlpec);
 
-    while (shm->stav == SIM_RUNNING) {
+    while (/*shm->stav == SIM_RUNNING*/1) {
         //zamknutie
         sem_wait(&shm->shm_mutex);
+
+        if (kroky >= LIMIT_KROKOV) {
+            shm->stav = SIM_FINISHED;
+            sem_post(&shm->shm_mutex);
+            sem_post(&shm->data_ready); // Posledný signál pre klienta, aby sa zobudil a skončil
+            break;
+        }
 
         //logika pohybu
         int smer = rand() % 4; //0 hore, 1 dole, 2 vlavo, 3 vpravo
@@ -32,6 +42,7 @@ void spusti_server(ZdielaneData_t* shm) {
             shm->aktualna_pozicia_chodca.stlpec++;
         }
 
+        kroky++;
         //odomknutie
         sem_post(&shm->shm_mutex);
 
@@ -39,6 +50,8 @@ void spusti_server(ZdielaneData_t* shm) {
         sem_post(&shm->data_ready);
 
         //simulovanie casovy krok (napr 0.5 sekundy)
+        printf("[SERVER] Chodec sa pohol.\n");
         usleep(500000);
     }
+    printf("[SERVER] Slucka skoncila, stav bol: %d\n", shm->stav);
 }
