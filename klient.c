@@ -25,6 +25,8 @@ void spusti_klienta(ZdielaneData_t* shm) {
             for (int stlpec = 0; stlpec < MAX_COLS; stlpec++) {
                 if (shm->aktualna_pozicia_chodca.riadok == riadok && shm->aktualna_pozicia_chodca.stlpec == stlpec) {
                     printf(" C ");
+                } else if (shm->svet[riadok][stlpec] == PREKAZKA){
+                    printf(" # ");
                 } else {
                     printf(" . ");
                 }
