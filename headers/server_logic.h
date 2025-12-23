@@ -1,0 +1,8 @@
+//
+// Created by damko on 16/12/2025.
+//
+
+#ifndef SEMESTRALKA_SERVER_LOGIC_H
+#define SEMESTRALKA_SERVER_LOGIC_H
+
+#endif //SEMESTRALKA_SERVER_LOGIC_H
