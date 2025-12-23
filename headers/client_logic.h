@@ -11,5 +11,7 @@
  * Funkcia klienta, ktora caka na signal od servera a vykresluje mapu.
  */
 void spusti_klienta(ZdielaneData_t* shm);
+void vykresli_mriezku_s_chodcom(ZdielaneData_t* shm);
+void vykresli_tabulku_statistik(ZdielaneData_t* shm);
 
 #endif //SEMESTRALKA_CLIENT_LOGIC_H

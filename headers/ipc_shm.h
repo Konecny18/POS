@@ -10,6 +10,11 @@
 
 #include "common.h"
 
+typedef enum {
+    INTERAKTIVNY = 0,
+    SUMARNY = 1
+}SimulaciaMod_t;
+
 //struktura pre uchovanie vysledkov pre jedno policko
 typedef struct {
     double avg_kroky; //avg pocet krokov na dosiahnutie [0,0]
@@ -27,11 +32,14 @@ typedef struct {
     int stlpece;
     int K_max_kroky;
     int total_replikacie;
+    int pocet_prekazok;
     double pravdepodobnost[4]; //Pravdepodobnost pobyhu (hore, dole, vlavo, vpravo)
 
     //stav simulacie (aktualizovane serverom)
     Simulacia_stav stav; //aktualny stav simulacie (INIT...)
     int aktualne_replikacie; //cislo replikacie
+
+    SimulaciaMod_t mod;
 
     //data sveta a vysledky
     Typ_policka svet[MAX_ROWS][MAX_COLS];

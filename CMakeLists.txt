@@ -15,6 +15,7 @@ add_executable(Semestralka
         headers/ipc_shm.h
         headers/client_menu.h
         headers/client_render.h
+        menu.c
 )
 
 # KĽÚČOVÉ PRE LINUX: Prepojenie knižníc pre vlákna (pthread) a zdieľanú pamäť (rt)

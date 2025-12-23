@@ -28,19 +28,19 @@ void spusti_server(ZdielaneData_t* shm) {
     printf("[SERVER] Startujem slucku...\n");
 
     //generovanie sveta
-    generuj_svet_s_prekazkami(shm, 10);
+    generuj_svet_s_prekazkami(shm, shm->pocet_prekazok);
 
     int kroky = 0;
-    const int LIMIT_KROKOV = 10;
+    int LIMIT_KROKOV = shm->K_max_kroky;
 
     //nastavenia PC stavu
     shm->stav = SIM_RUNNING;
-    shm->aktualna_pozicia_chodca.riadok = MAX_ROWS / 2;
-    shm->aktualna_pozicia_chodca.stlpec = MAX_COLS / 2;
+    shm->aktualna_pozicia_chodca.riadok = shm->riadky / 2;
+    shm->aktualna_pozicia_chodca.stlpec = shm->stlpece / 2;
 
     printf("[SERVER] Simulacia zacina na pozicii [%d, %d]\n", shm->aktualna_pozicia_chodca.riadok, shm->aktualna_pozicia_chodca.stlpec);
 
-    while (/*shm->stav == SIM_RUNNING*/1) {
+    while (shm->stav == SIM_RUNNING) {
         //zamknutie
         sem_wait(&shm->shm_mutex);
 
@@ -53,17 +53,16 @@ void spusti_server(ZdielaneData_t* shm) {
 
         //kontrola prekazok
         Pozicia_t buduca_pozicia = shm->aktualna_pozicia_chodca;
-
         //logika pohybu
         int smer = rand() % 4; //0 hore, 1 dole, 2 vlavo, 3 vpravo
 
         if (smer == 0 && buduca_pozicia.riadok > 0) {
             buduca_pozicia.riadok--;
-        } else if (smer == 1 && buduca_pozicia.riadok < MAX_ROWS - 1) {
+        } else if (smer == 1 && buduca_pozicia.riadok < shm->riadky - 1) {
             buduca_pozicia.riadok++;
         } else if (smer == 2 && buduca_pozicia.stlpec > 0) {
             buduca_pozicia.stlpec--;
-        } else if (smer == 3 && buduca_pozicia.stlpec < MAX_COLS - 1) {
+        } else if (smer == 3 && buduca_pozicia.stlpec < shm->stlpece - 1) {
             buduca_pozicia.stlpec++;
         }
 
@@ -74,6 +73,7 @@ void spusti_server(ZdielaneData_t* shm) {
             printf("[SERVER] Chodec sa pohol na [%d, %d]\n]", shm->aktualna_pozicia_chodca.riadok, shm->aktualna_pozicia_chodca.stlpec);
         } else {
             printf("[SERVER] Naraz do prekazky chodec ostava na mieste\n");
+            kroky++;
         }
         //odomknutie
         sem_post(&shm->shm_mutex);
@@ -85,4 +85,39 @@ void spusti_server(ZdielaneData_t* shm) {
         usleep(1000000);
     }
     printf("[SERVER] Slucka skoncila, stav bol: %d\n", shm->stav);
+}
+
+void simuluj_chodzu_z_policka(ZdielaneData_t* shm, int start_r, int start_s) {
+    int aktualny_r = start_r;
+    int aktualny_s = start_s;
+
+    int pocet_krok = 0;
+
+    //chodec ide kym nieje v cieli alebo neprekroci pocet K
+    while ((aktualny_r != 0 || aktualny_s != 0) && pocet_krok < shm->K_max_kroky) {
+        //TODO bod 7 pravdepodobnost na rozhodovanie
+        int smer = rand() & 4;
+        //TODO kod pre posun a kontrolu prekazok a stien
+        pocet_krok++;
+
+        //ak je INTERAKTIVNY mod musi signalizovat klientovi
+        if (shm->mod == INTERAKTIVNY) {
+            sem_wait(&shm->shm_mutex);
+            shm->aktualna_pozicia_chodca.riadok = aktualny_r;
+            shm->aktualna_pozicia_chodca.stlpec = aktualny_s;
+            sem_post(&shm->shm_mutex);
+            sem_post(&shm->data_ready);
+            usleep(100000);
+        }
+    }
+    //STATISTIKY
+    sem_wait(&shm->shm_mutex);
+    //Pripocitaj kroky pre vypocet priemeru
+    shm->vysledky[aktualny_r][aktualny_s].avg_kroky += pocet_krok;
+
+    //ak dosiel do ciela [0,0] zvysi pocitadlo uspechov pre pravdepodobnost
+    if (aktualny_r == 0 && aktualny_s == 0) {
+        shm->vysledky[start_r][start_s].pravdepodobnost_dosiahnutia++;
+    }
+    sem_post(&shm->shm_mutex);
 }

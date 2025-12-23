@@ -7,12 +7,17 @@
 
 #include "headers/server_logic.h"
 #include "headers/client_logic.h"
+#include "headers/client_menu.h"
 
 int main() {
     key_t key = 1234; //ten isty co som zadefinoval
 
     //vytvorenie a pripojenie zdielanej pamate
     ZdielaneData_t* shm = shm_create_and_attach(key);
+
+    //volanie menu
+    zobraz_pociatocne_menu(shm);
+
     if (shm == NULL) {
         fprintf(stderr,"Nepodarilo sa vytvorit SHM.\n");
         return -1;
