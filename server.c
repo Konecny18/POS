@@ -47,23 +47,32 @@ void simuluj_chodzu_z_policka(ZdielaneData_t* shm, int start_r, int start_s) {
     int aktualny_s = start_s;
     int pocet_krok = 0;
 
+
     //chodec ide kym nieje v cieli alebo neprekroci pocet K
     while ((aktualny_r != 0 || aktualny_s != 0) && pocet_krok < shm->K_max_kroky) {
-        int smer = vyber_smeru(shm);
+        int smer = vyber_smeru(shm) % 4;
         int buduci_r = aktualny_r;
         int buduci_s = aktualny_s;
 
-        //vypocet buducej pozicie
-        if (smer == 0 && buduci_r > 0) {
-            buduci_r--;
-        } else if (smer == 1 && buduci_r < shm->riadky - 1) {
-            buduci_r++; // Dole
-        } else if (smer == 2 && buduci_s > 0) {
-            buduci_s--;            // Vľavo
-        } else if (smer == 3 && buduci_s < shm->stlpece - 1) {
-            buduci_s++;
+        //vypocet buducej pozicie s toroidnym efektom (BOD 3)
+        switch (smer) {
+            case 0: // HORE
+                buduci_r = (aktualny_r - 1 + shm->riadky) % shm->riadky;
+                break;
+            case 1: // DOLE
+                buduci_r = (aktualny_r + 1) % shm->riadky;
+                break;
+            case 2: // VLAVO
+                buduci_s = (aktualny_s - 1 + shm->stlpece) % shm->stlpece;
+                break;
+            case 3: // VPRAVO
+                buduci_s = (aktualny_s + 1) % shm->stlpece;
+                break;
+            default:
+                return;
         }
 
+        // Kontrola prekážky: Ak na cieľovom políčku nie je stena, pohni sa
         if (shm->svet[buduci_r][buduci_s] != PREKAZKA) {
             aktualny_r = buduci_r;
             aktualny_s = buduci_s;
@@ -139,4 +148,3 @@ void spusti_server(ZdielaneData_t* shm) {
     sem_post(&shm->data_ready); // Posledný signál pre klienta
     printf("[SERVER] Všetky replikácie dokončené.\n");
 }
-
