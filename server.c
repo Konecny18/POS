@@ -20,6 +20,13 @@ int vyber_smeru(ZdielaneData_t* shm) {
 void generuj_svet_s_prekazkami(ZdielaneData_t* shm, int percento_prekazok) {
     for (int riadok = 0; riadok < MAX_ROWS; riadok++) {
         for (int stlpec = 0; stlpec < MAX_COLS; stlpec++) {
+
+            //ochrana aby ciel [0,0] nemohol byt prekazka
+            if (riadok == 0 && stlpec == 0) {
+                shm->svet[riadok][stlpec] = PRAZDNE;
+                continue;
+            }
+
             //vynechanie stred mriezky aby chodec nezacinal v stene
             if (riadok == MAX_ROWS / 2 && stlpec == MAX_COLS / 2) {
                 shm->svet[riadok][stlpec] = CHODEC;
@@ -96,7 +103,7 @@ void spusti_server(ZdielaneData_t* shm) {
     //nastavenia PC stavu
     shm->stav = SIM_RUNNING;
 
-    for (int r_id = 1; r_id <= shm->total_replikacie; r_id++) {
+    for (int r_id = 0; r_id < shm->total_replikacie; r_id++) {
         //TODO momentalne funguje tak ze ked vytvorim hru a zadam 10 replikacii tak vzdy bude taka ista plocha kde chodec bude vzdy generovany na tej istej ploche aj prekazky
         //TODO mozno to treba upravit tak aby som si vybral umiestnenie chodza a ukazal cestu do ciela
         shm->aktualne_replikacie = r_id;
@@ -121,13 +128,11 @@ void spusti_server(ZdielaneData_t* shm) {
                     }
                     //spustim jednu cestu z chodca z tohto bodu
                     simuluj_chodzu_z_policka(shm, riadok, stlpec);
-
-                    //ak niekdo ukoncil simulaciu cez menu
-                    if (shm->stav == SIM_EXIT) {
-                        return;
-                    }
                 }
             }
+            //po dokonceni vsetkych policok v jednej replikacii
+            sem_post(&shm->data_ready);
+            usleep(1000000);
         }
     }
     shm->stav = SIM_FINISHED;
