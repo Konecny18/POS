@@ -2,7 +2,62 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include "headers/ipc_shm.h"
+
+bool je_svet_validny(ZdielaneData_t* shm) {
+    int riadky = shm->riadky;
+    int stlpce = shm->stlpece;
+
+    //spocitanie kolko volnych policok vratane ciela v mape je
+    int celkovy_pocet = 0;
+    for (int riadok = 0; riadok < riadky; riadok++) {
+        for (int stlpec = 0; stlpec < stlpce; stlpec++) {
+            if (shm->svet[riadok][stlpec] != PREKAZKA) {
+                celkovy_pocet++;
+            }
+        }
+    }
+
+    //BFS priprava
+    bool navstivene[MAX_ROWS][MAX_COLS] = {false};
+    int front_r[MAX_ROWS * MAX_COLS];
+    int front_s[MAX_ROWS * MAX_COLS];
+    int zaciatok = 0;
+    int koniec = 0;
+
+    //start z [0,0]
+    front_r[koniec] = 0;
+    front_s[koniec] = 0;
+    koniec++;
+    navstivene[0][0] = true;
+    int dosiahnutelnych = 1;
+
+    //rozlievanie cez BFS
+    while (zaciatok < koniec) {
+        int riadok = front_r[zaciatok++];
+        int stlpec = front_s[zaciatok-1];  //oprava indexu po zaciatok++
+
+        int delta_riadok[] = {-1, 1, 0, 0};
+        int delta_stlpec[] = {0, 0, -1, 1};
+
+        for (int i = 0; i < 4; i++) {
+            //toroidny sused
+            int novy_riadok = ((riadok + delta_riadok[i] + riadky) % riadky);
+            int novy_stlpec = ((stlpec + delta_stlpec[i] + stlpce) % stlpce);
+
+            if (shm->svet[novy_riadok][novy_stlpec] != PREKAZKA && !navstivene[novy_riadok][novy_stlpec]) {
+                navstivene[novy_riadok][novy_stlpec] = true;
+                front_r[koniec] = novy_riadok;
+                front_s[koniec] = novy_stlpec;
+                koniec++;
+                dosiahnutelnych++;
+            }
+        }
+    }
+    //ak som sa dostal na vsetky volne policka mapa je v poriadku
+    return (dosiahnutelnych == celkovy_pocet);
+}
 
 int vyber_smeru(ZdielaneData_t* shm) {
     double r = (double)rand() / RAND_MAX;
@@ -106,9 +161,15 @@ void simuluj_chodzu_z_policka(ZdielaneData_t* shm, int start_r, int start_s) {
 void spusti_server(ZdielaneData_t* shm) {
     srand(time(NULL));
 
-    printf("[SERVER] Startujem slucku...\n");
+    int pokusy_generovania = 0;
+    do {
+        generuj_svet_s_prekazkami(shm, shm->pocet_prekazok);
+        pokusy_generovania++;
+    } while (!je_svet_validny(shm));
+
+    printf("[SERVER] Svet vygenerovany na %d. pokus.\n", pokusy_generovania);
     //generovanie sveta
-    generuj_svet_s_prekazkami(shm, shm->pocet_prekazok);
+
     //nastavenia PC stavu
     shm->stav = SIM_RUNNING;
 
