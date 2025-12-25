@@ -91,86 +91,45 @@ void spusti_server(ZdielaneData_t* shm) {
     srand(time(NULL));
 
     printf("[SERVER] Startujem slucku...\n");
-
     //generovanie sveta
     generuj_svet_s_prekazkami(shm, shm->pocet_prekazok);
-
-    int kroky = 0;
-    int LIMIT_KROKOV = shm->K_max_kroky;
-
     //nastavenia PC stavu
     shm->stav = SIM_RUNNING;
-    shm->aktualna_pozicia_chodca.riadok = shm->riadky / 2;
-    shm->aktualna_pozicia_chodca.stlpec = shm->stlpece / 2;
 
-    //hlavny cyklus replikacii
     for (int r_id = 1; r_id <= shm->total_replikacie; r_id++) {
+        //TODO momentalne funguje tak ze ked vytvorim hru a zadam 10 replikacii tak vzdy bude taka ista plocha kde chodec bude vzdy generovany na tej istej ploche aj prekazky
+        //TODO mozno to treba upravit tak aby som si vybral umiestnenie chodza a ukazal cestu do ciela
         shm->aktualne_replikacie = r_id;
+        if (shm->mod == INTERAKTIVNY) {
+            int start_r = shm->riadky / 2;
+            int start_s = shm->stlpece / 2;
 
-        //pre kazde policko sveta
-        for (int riadok = 0; riadok < shm->riadky; riadok++) {
-            for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
-                //ak je policko prekazka alebo ciel, simulaciu odtial nepustam
-                if (shm->svet[riadok][stlpec] == PREKAZKA || (riadok == 0 && stlpec == 0)) {
-                    continue;
-                }
-                //spustim jednu cestu z chodca z tohto bodu
-                simuluj_chodzu_z_policka(shm, riadok, stlpec);
+            shm->aktualna_pozicia_chodca.riadok = start_r;
+            shm->aktualna_pozicia_chodca.stlpec = start_s;
 
-                //ak niekdo ukoncil simulaciu cez menu
-                if (shm->stav == SIM_EXIT) {
-                    return;
+            simuluj_chodzu_z_policka(shm, start_r, start_s);
+
+            usleep(200000);
+        } else {
+            //cyklus pre sumarny rezim
+            //pre kazde policko sveta
+            for (int riadok = 0; riadok < shm->riadky; riadok++) {
+                for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
+                    //ak je policko prekazka alebo ciel, simulaciu odtial nepustam
+                    if (shm->svet[riadok][stlpec] == PREKAZKA || (riadok == 0 && stlpec == 0)) {
+                        continue;
+                    }
+                    //spustim jednu cestu z chodca z tohto bodu
+                    simuluj_chodzu_z_policka(shm, riadok, stlpec);
+
+                    //ak niekdo ukoncil simulaciu cez menu
+                    if (shm->stav == SIM_EXIT) {
+                        return;
+                    }
                 }
             }
         }
     }
-
-    // printf("[SERVER] Simulacia zacina na pozicii [%d, %d]\n", shm->aktualna_pozicia_chodca.riadok, shm->aktualna_pozicia_chodca.stlpec);
-    //
-    // while (shm->stav == SIM_RUNNING) {
-    //     //zamknutie
-    //     sem_wait(&shm->shm_mutex);
-    //
-    //     if (kroky >= LIMIT_KROKOV) {
-    //         shm->stav = SIM_FINISHED;
-    //         sem_post(&shm->shm_mutex);
-    //         sem_post(&shm->data_ready); // Posledný signál pre klienta, aby sa zobudil a skončil
-    //         break;
-    //     }
-    //
-    //     //kontrola prekazok
-    //     Pozicia_t buduca_pozicia = shm->aktualna_pozicia_chodca;
-    //     //logika pohybu
-    //     int smer = rand() % 4; //0 hore, 1 dole, 2 vlavo, 3 vpravo
-    //
-    //     if (smer == 0 && buduca_pozicia.riadok > 0) {
-    //         buduca_pozicia.riadok--;
-    //     } else if (smer == 1 && buduca_pozicia.riadok < shm->riadky - 1) {
-    //         buduca_pozicia.riadok++;
-    //     } else if (smer == 2 && buduca_pozicia.stlpec > 0) {
-    //         buduca_pozicia.stlpec--;
-    //     } else if (smer == 3 && buduca_pozicia.stlpec < shm->stlpece - 1) {
-    //         buduca_pozicia.stlpec++;
-    //     }
-    //
-    //     //skontroluj ci na novej pozicii nieje prekazka
-    //     if (shm->svet[buduca_pozicia.riadok][buduca_pozicia.stlpec] != PREKAZKA) {
-    //         shm->aktualna_pozicia_chodca = buduca_pozicia;
-    //         kroky++;
-    //         printf("[SERVER] Chodec sa pohol na [%d, %d]\n]", shm->aktualna_pozicia_chodca.riadok, shm->aktualna_pozicia_chodca.stlpec);
-    //     } else {
-    //         printf("[SERVER] Naraz do prekazky chodec ostava na mieste\n");
-    //         kroky++;
-    //     }
-        //odomknutie
-        // sem_post(&shm->shm_mutex);
-        //
-        // //signalizacia klientovi, ze chodec sa pohol
-        // sem_post(&shm->data_ready);
-        //
-        // //simulovanie casovy krok (napr 0.5 sekundy)
-        // usleep(1000000);
-    //}
     shm->stav = SIM_FINISHED;
     sem_post(&shm->data_ready); // Posledný signál pre klienta
     printf("[SERVER] Všetky replikácie dokončené.\n");

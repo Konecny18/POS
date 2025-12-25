@@ -42,7 +42,7 @@ void vykresli_tabulku_statistik(ZdielaneData_t* shm) {
 void spusti_klienta(ZdielaneData_t* shm) {
     printf("[KLIENT] Spusteny, cakam na data...\n");
 
-    while (/*shm->stav == SIM_RUNNING*/1) {
+    while (shm->stav == SIM_RUNNING || shm->stav == SIM_INIT) {
         //cakanie na signal
         //Klient zastavi a caka kym server neurobi sem_post
         sem_wait(&shm->data_ready);
