@@ -1,6 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include "headers/client_logic.h"
+
+void* kontrola_klavestnice(void* arg) {
+    ZdielaneData_t* shm = (ZdielaneData_t*)arg;
+    char c;
+    while (shm->stav == SIM_RUNNING) {
+        c = getchar();
+        if (c == 'q' || c == 'Q') {
+            sem_wait(&shm->shm_mutex);
+            shm->stav = SIM_STOP_REQUESTED;
+            sem_post(&shm->shm_mutex);
+            printf("[KLIENT] ukoncuje aplikaciu\n");
+            break;
+        }
+    }
+    return NULL;
+}
 
 void vykresli_mriezku_s_chodcom(ZdielaneData_t* shm) {
     printf("\n ---INTERAKTIVNA SIMULACIA---\n");
@@ -42,6 +59,10 @@ void vykresli_tabulku_statistik(ZdielaneData_t* shm) {
 void spusti_klienta(ZdielaneData_t* shm) {
     printf("[KLIENT] Spusteny, cakam na data...\n");
 
+    pthread_t thread_id;
+    pthread_create(&thread_id, NULL, kontrola_klavestnice, shm);
+    pthread_detach(thread_id);//vlakno pobezi nezavisle
+
     while (/*shm->stav == SIM_RUNNING || shm->stav == SIM_INIT*/1) {
         //cakanie na signal
         //Klient zastavi a caka kym server neurobi sem_post
@@ -60,7 +81,7 @@ void spusti_klienta(ZdielaneData_t* shm) {
             vykresli_tabulku_statistik(shm);
         }
 
-        if (shm->stav == SIM_FINISHED || shm->stav == SIM_EXIT) {
+        if (shm->stav == SIM_FINISHED || shm->stav == SIM_EXIT || shm->stav == SIM_STOP_REQUESTED) {
             sem_post(&shm->shm_mutex);
             break; // Vyskočí z while a skončí proces klienta
         }

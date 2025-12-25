@@ -38,13 +38,13 @@ bool je_svet_validny(ZdielaneData_t* shm) {
         int riadok = front_r[zaciatok++];
         int stlpec = front_s[zaciatok-1];  //oprava indexu po zaciatok++
 
-        int delta_riadok[] = {-1, 1, 0, 0};
-        int delta_stlpec[] = {0, 0, -1, 1};
+        int posun_riadok[] = {-1, 1, 0, 0};
+        int posun_stlpec[] = {0, 0, -1, 1};
 
         for (int i = 0; i < 4; i++) {
             //toroidny sused
-            int novy_riadok = ((riadok + delta_riadok[i] + riadky) % riadky);
-            int novy_stlpec = ((stlpec + delta_stlpec[i] + stlpce) % stlpce);
+            int novy_riadok = ((riadok + posun_riadok[i] + riadky) % riadky);
+            int novy_stlpec = ((stlpec + posun_stlpec[i] + stlpce) % stlpce);
 
             if (shm->svet[novy_riadok][novy_stlpec] != PREKAZKA && !navstivene[novy_riadok][novy_stlpec]) {
                 navstivene[novy_riadok][novy_stlpec] = true;
@@ -73,8 +73,8 @@ int vyber_smeru(ZdielaneData_t* shm) {
 }
 
 void generuj_svet_s_prekazkami(ZdielaneData_t* shm, int percento_prekazok) {
-    for (int riadok = 0; riadok < MAX_ROWS; riadok++) {
-        for (int stlpec = 0; stlpec < MAX_COLS; stlpec++) {
+    for (int riadok = 0; riadok < shm->riadky; riadok++) {
+        for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
 
             //ochrana aby ciel [0,0] nemohol byt prekazka
             if (riadok == 0 && stlpec == 0) {
@@ -83,8 +83,8 @@ void generuj_svet_s_prekazkami(ZdielaneData_t* shm, int percento_prekazok) {
             }
 
             //vynechanie stred mriezky aby chodec nezacinal v stene
-            if (riadok == MAX_ROWS / 2 && stlpec == MAX_COLS / 2) {
-                shm->svet[riadok][stlpec] = CHODEC;
+            if (riadok == shm->riadky / 2 && stlpec == shm->stlpece / 2) {
+                shm->svet[riadok][stlpec] = PRAZDNE;
                 continue;
             }
             //nahodne rozhodnutie ci na policku bude prekazka
@@ -96,15 +96,29 @@ void generuj_svet_s_prekazkami(ZdielaneData_t* shm, int percento_prekazok) {
         }
     }
 }
-
+//TODO pravdepodobne to bude fungovat tak ze interaktivny mod bude mat iba jednu replikaciu
+//vykresli vzdy o jednu mapu navyse cize ked dam krokov 5 tak najskor sa vykresli zaciatok a potom 5 krokov, a na konci sa vykresli finalna mapa cize to je este o jednu navyse
 void simuluj_chodzu_z_policka(ZdielaneData_t* shm, int start_r, int start_s) {
     int aktualny_r = start_r;
     int aktualny_s = start_s;
     int pocet_krok = 0;
 
+    //zobrazenie startovacej pozicie chodcu
+    if (shm->mod == INTERAKTIVNY) {
+        sem_wait(&shm->shm_mutex);
+        shm->aktualna_pozicia_chodca.riadok = aktualny_r;
+        shm->aktualna_pozicia_chodca.stlpec = aktualny_s;
+        sem_post(&shm->shm_mutex);
+
+        sem_post(&shm->data_ready);
+        usleep(200000);
+    }
 
     //chodec ide kym nieje v cieli alebo neprekroci pocet K
     while ((aktualny_r != 0 || aktualny_s != 0) && pocet_krok < shm->K_max_kroky) {
+        if (shm->stav == SIM_STOP_REQUESTED) {
+            return;
+        }
         int smer = vyber_smeru(shm) % 4;
         int buduci_r = aktualny_r;
         int buduci_s = aktualny_s;
@@ -131,16 +145,17 @@ void simuluj_chodzu_z_policka(ZdielaneData_t* shm, int start_r, int start_s) {
         if (shm->svet[buduci_r][buduci_s] != PREKAZKA) {
             aktualny_r = buduci_r;
             aktualny_s = buduci_s;
+
+            sem_wait(&shm->shm_mutex);
+            shm->aktualna_pozicia_chodca.riadok = aktualny_r;
+            shm->aktualna_pozicia_chodca.stlpec = aktualny_s;
+            sem_post(&shm->shm_mutex);
         }
 
         pocet_krok++;
 
         //ak je INTERAKTIVNY mod musi signalizovat klientovi
         if (shm->mod == INTERAKTIVNY) {
-            sem_wait(&shm->shm_mutex);
-            shm->aktualna_pozicia_chodca.riadok = aktualny_r;
-            shm->aktualna_pozicia_chodca.stlpec = aktualny_s;
-            sem_post(&shm->shm_mutex);
             sem_post(&shm->data_ready);
             usleep(100000);
         }
@@ -174,6 +189,9 @@ void spusti_server(ZdielaneData_t* shm) {
     shm->stav = SIM_RUNNING;
 
     for (int r_id = 0; r_id < shm->total_replikacie; r_id++) {
+        if (shm->stav == SIM_STOP_REQUESTED) {
+            break;
+        }
         //TODO momentalne funguje tak ze ked vytvorim hru a zadam 10 replikacii tak vzdy bude taka ista plocha kde chodec bude vzdy generovany na tej istej ploche aj prekazky
         //TODO mozno to treba upravit tak aby som si vybral umiestnenie chodza a ukazal cestu do ciela
         shm->aktualne_replikacie = r_id;

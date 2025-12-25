@@ -3,6 +3,8 @@ project(Semestralka C)
 
 set(CMAKE_C_STANDARD 11)
 
+find_package(Threads REQUIRED)
+
 # Pridanie všetkých potrebných súborov (odstránil som duplicity)
 add_executable(Semestralka
         main.c

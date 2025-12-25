@@ -31,6 +31,7 @@ typedef struct {
 typedef enum {
     SIM_INIT, //Simulacia inicializovana
     SIM_RUNNING, //prebieha
+    SIM_STOP_REQUESTED, //pouzivatel ukoncuje
     SIM_PAUSED, //zastavena
     SIM_FINISHED, //skoncila
     SIM_EXIT //aplikacia sa ukoncuje
