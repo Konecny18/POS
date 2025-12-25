@@ -7,14 +7,18 @@
 void zobraz_pociatocne_menu(ZdielaneData_t* shm) {
     printf("=== NASTAVENIA SIMULACIE ===\n");
 
-    printf("Zadaj pocet replikacii: ");
-    scanf("%d", &shm->total_replikacie);
-
     int volba_modu;
     printf("Vyber mod simulacie (0 - Interaktivny, 1 - Sumarny): ");
     scanf("%d", &volba_modu);
     shm->mod = (volba_modu == 0) ? INTERAKTIVNY : SUMARNY;
     //shm->mod = (SimulaciaMod_t) volba_modu;
+
+    if (volba_modu == SUMARNY) {
+        printf("Zadaj pocet replikacii: ");
+        scanf("%d", &shm->total_replikacie);
+    } else {
+        shm->total_replikacie = 1;
+    }
 
     //parametre simulacie
     printf("Max. pocet krokov: ");
@@ -93,54 +97,6 @@ void zobraz_pociatocne_menu(ZdielaneData_t* shm) {
         }
 
     } while (suma < 0.999 || suma > 1.001);
-
-    // double suma;
-    // bool zly_input = false;
-    // do {
-    //     suma = 0;
-    //     printf("Zadaj pravdepodobnosti pohybu (sucet musi byt 1.0): \n");
-    //     char* smery[] = {"Hore", "Dole", "vlavo", "Vpravo"};
-    //
-    //     for (int i = 0; i < 4; i++) {
-    //         /* Keep prompting for the same direction until a valid number in [0,1]
-    //            is entered. On invalid input we clear the input buffer and retry. */
-    //         while (1) {
-    //             if (zly_input == false) {
-    //                 printf("Pravdepodobnost pre %s: ", smery[i]);
-    //             } else {
-    //                 i--;
-    //                 printf("Pravdepodobnost pre %s: ", smery[i]);
-    //             }
-    //
-    //             if (scanf(" %lf", &shm->pravdepodobnost[i]) != 1) {
-    //                 printf("CHYBA: zadaj cislo s bodkou\n");
-    //                 zly_input = true;
-    //                 int c;
-    //                 while ((c = getchar()) != '\n' && c != EOF);
-    //
-    //                 /* retry same index */
-    //                 continue;
-    //             }
-    //
-    //             /* validate range */
-    //             if (shm->pravdepodobnost[i] < 0.0 || shm->pravdepodobnost[i] > 1.0) {
-    //                 printf("CHYBA: pravdepodobnost musi byt v rozhrani [0,1]\n");
-    //                 /* consume rest of line if any and retry */
-    //                 int c;
-    //                 while ((c = getchar()) != '\n' && c != EOF);
-    //                 continue;
-    //             }
-    //
-    //             /* accepted value */
-    //             zly_input = false;
-    //             suma += shm->pravdepodobnost[i];
-    //             break;
-    //         }
-    //      }
-    //     if (suma < 0.99 || suma > 1.01) {
-    //         printf("Chyba: Sucet je %.4f. Musi byt 1.0. Skus znova\n", suma);
-    //     }
-    // } while (suma < 0.99 || suma > 1.01);
 
     shm->stav = SIM_INIT;
     printf("\n[MENU] Nastavenia pripravene, simulacia startuje \n");

@@ -35,8 +35,10 @@ bool je_svet_validny(ZdielaneData_t* shm) {
 
     //rozlievanie cez BFS
     while (zaciatok < koniec) {
-        int riadok = front_r[zaciatok++];
-        int stlpec = front_s[zaciatok-1];  //oprava indexu po zaciatok++
+        int riadok = front_r[zaciatok];
+        int stlpec = front_s[zaciatok];  //oprava indexu po zaciatok++
+
+        zaciatok++;
 
         int posun_riadok[] = {-1, 1, 0, 0};
         int posun_stlpec[] = {0, 0, -1, 1};
@@ -174,42 +176,58 @@ void simuluj_chodzu_z_policka(ZdielaneData_t* shm, int start_r, int start_s) {
 }
 
 void spusti_server(ZdielaneData_t* shm) {
+    printf("[SERVER] Čakám na inicializáciu menu klientom...\n");
+    // SERVER TU BUDE ČAKAŤ, kým klient nenastaví SIM_INIT
+    while (shm->stav != SIM_INIT) {
+        if (shm->stav == SIM_STOP_REQUESTED) return;
+        usleep(100000); // 100ms pauza, aby sme nevyťažili procesor
+    }
     srand(time(NULL));
 
     int pokusy_generovania = 0;
     do {
         generuj_svet_s_prekazkami(shm, shm->pocet_prekazok);
         pokusy_generovania++;
+        // Kontrola, či užívateľ neukončil program počas generovania (ak by trvalo dlho)
+        if (shm->stav == SIM_STOP_REQUESTED) return;
     } while (!je_svet_validny(shm));
 
     printf("[SERVER] Svet vygenerovany na %d. pokus.\n", pokusy_generovania);
     //generovanie sveta
 
     //nastavenia PC stavu
+    printf("[SERVER] Svet uspesne overeny cez BFS. Startujem simulaciu...\n");
     shm->stav = SIM_RUNNING;
 
-    for (int r_id = 0; r_id < shm->total_replikacie; r_id++) {
-        if (shm->stav == SIM_STOP_REQUESTED) {
-            break;
-        }
+    if (shm->mod == INTERAKTIVNY) {
         //TODO momentalne funguje tak ze ked vytvorim hru a zadam 10 replikacii tak vzdy bude taka ista plocha kde chodec bude vzdy generovany na tej istej ploche aj prekazky
         //TODO mozno to treba upravit tak aby som si vybral umiestnenie chodza a ukazal cestu do ciela
-        shm->aktualne_replikacie = r_id;
-        if (shm->mod == INTERAKTIVNY) {
-            int start_r = shm->riadky / 2;
-            int start_s = shm->stlpece / 2;
+        int start_r = shm->riadky / 2;
+        int start_s = shm->stlpece / 2;
 
-            shm->aktualna_pozicia_chodca.riadok = start_r;
-            shm->aktualna_pozicia_chodca.stlpec = start_s;
+        shm->aktualna_pozicia_chodca.riadok = start_r;
+        shm->aktualna_pozicia_chodca.stlpec = start_s;
+        shm->aktualne_replikacie = 0;
 
-            simuluj_chodzu_z_policka(shm, start_r, start_s);
+        simuluj_chodzu_z_policka(shm, start_r, start_s);
 
-            usleep(200000);
-        } else {
+        usleep(200000);
+    } else {
+        for (int r_id = 0; r_id < shm->total_replikacie; r_id++) {
+            if (shm->stav == SIM_STOP_REQUESTED) {
+                break;
+            }
+
+            shm->aktualne_replikacie = r_id;
+
             //cyklus pre sumarny rezim
             //pre kazde policko sveta
             for (int riadok = 0; riadok < shm->riadky; riadok++) {
                 for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
+                    // Kontrola ukončenia vo vnútri cyklov mapy (veľmi dôležité!)
+                    if (shm->stav == SIM_STOP_REQUESTED) {
+                        goto koniec_simulacie;
+                    }
                     //ak je policko prekazka alebo ciel, simulaciu odtial nepustam
                     if (shm->svet[riadok][stlpec] == PREKAZKA || (riadok == 0 && stlpec == 0)) {
                         continue;
@@ -223,6 +241,7 @@ void spusti_server(ZdielaneData_t* shm) {
             usleep(1000000);
         }
     }
+    koniec_simulacie:
     shm->stav = SIM_FINISHED;
     sem_post(&shm->data_ready); // Posledný signál pre klienta
     printf("[SERVER] Všetky replikácie dokončené.\n");

@@ -14,16 +14,13 @@ int main() {
 
     //vytvorenie a pripojenie zdielanej pamate
     ZdielaneData_t* shm = shm_create_and_attach(key);
-
-    //volanie menu
-    zobraz_pociatocne_menu(shm);
-
     if (shm == NULL) {
         fprintf(stderr,"Nepodarilo sa vytvorit SHM.\n");
         return -1;
     }
 
-    shm->stav = SIM_RUNNING; // musi byt nastaveny na 1 (bezi)
+    // 2. Volanie menu (Menu na konci nastaví shm->stav = SIM_INIT)
+    zobraz_pociatocne_menu(shm);
 
     //rozdelenie procesov
     pid_t pid = fork();

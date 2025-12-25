@@ -6,7 +6,7 @@
 void* kontrola_klavestnice(void* arg) {
     ZdielaneData_t* shm = (ZdielaneData_t*)arg;
     char c;
-    while (shm->stav == SIM_RUNNING) {
+    while (shm->stav != SIM_FINISHED && shm->stav != SIM_STOP_REQUESTED) {
         c = getchar();
         if (c == 'q' || c == 'Q') {
             sem_wait(&shm->shm_mutex);

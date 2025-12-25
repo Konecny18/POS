@@ -36,7 +36,7 @@ typedef struct {
     double pravdepodobnost[4]; //Pravdepodobnost pobyhu (hore, dole, vlavo, vpravo)
 
     //stav simulacie (aktualizovane serverom)
-    Simulacia_stav stav; //aktualny stav simulacie (INIT...)
+    volatile Simulacia_stav stav; //aktualny stav simulacie (INIT...)
     int aktualne_replikacie; //cislo replikacie
 
     SimulaciaMod_t mod;
