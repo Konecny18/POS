@@ -42,18 +42,18 @@ void vykresli_tabulku_statistik(ZdielaneData_t* shm) {
     for (int riadok = 0; riadok < shm->riadky; riadok++) {
         for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
             if (shm->svet[riadok][stlpec] == PREKAZKA) {
-                printf(" # ");
+                printf(" #### ");
             } else {
-                //vypocet priemeru
-                double priemer = 0;
-                if (shm->aktualne_replikacie > 0) {
-                    priemer = (double)shm->vysledky[riadok][stlpec].avg_kroky / shm->aktualne_replikacie;
-                }
-                printf("%5.2f ", priemer);
+                double priemer = (double)shm->vysledky[riadok][stlpec].avg_kroky / shm->total_replikacie;
+
+                double uspesnost = ((double)shm->vysledky[riadok][stlpec].pravdepodobnost_dosiahnutia / shm->total_replikacie * 100);
+
+                printf("%5.2f(%3.0f%%) ", priemer, uspesnost);
             }
         }
         printf("\n");
     }
+    printf("\n");
 }
 
 void spusti_klienta(ZdielaneData_t* shm) {
@@ -61,9 +61,9 @@ void spusti_klienta(ZdielaneData_t* shm) {
 
     pthread_t thread_id;
     pthread_create(&thread_id, NULL, kontrola_klavestnice, shm);
-    pthread_detach(thread_id);//vlakno pobezi nezavisle
+    //pthread_detach(thread_id);//vlakno pobezi nezavisle
 
-    while (/*shm->stav == SIM_RUNNING || shm->stav == SIM_INIT*/1) {
+    while (1) {
         //cakanie na signal
         //Klient zastavi a caka kym server neurobi sem_post
         sem_wait(&shm->data_ready);
@@ -76,9 +76,10 @@ void spusti_klienta(ZdielaneData_t* shm) {
         if (shm->mod == INTERAKTIVNY) {
             // Tu zavoláš tvoju existujúcu logiku s cyklami pre mriežku a 'C'
             vykresli_mriezku_s_chodcom(shm);
-        } else {
-            // Tu zavoláš novú logiku pre výpis štatistík (priemery/pravdepodobnosť)
+        } else if (shm->mod == SUMARNY && shm->stav == SIM_FINISHED){
             vykresli_tabulku_statistik(shm);
+        } else {
+            printf("[KLIENT] Sumarny mod: simulujem %d replikacii. Caka sa na vysledky...\n", shm->total_replikacie);
         }
 
         if (shm->stav == SIM_FINISHED || shm->stav == SIM_EXIT || shm->stav == SIM_STOP_REQUESTED) {
@@ -89,6 +90,7 @@ void spusti_klienta(ZdielaneData_t* shm) {
         //odomknutie
         sem_post(&shm->shm_mutex);
     }
+    pthread_cancel(thread_id);
     printf("[KLIENT] Simulacia ukoncena\n");
 }
 

@@ -212,6 +212,14 @@ void spusti_server(ZdielaneData_t* shm) {
 
         usleep(200000);
     } else {
+        //vycistenie vysledkov pre zaciatkom
+        for(int r = 0; r < shm->riadky; r++) {
+            for(int s = 0; s < shm->stlpece; s++) {
+                shm->vysledky[r][s].avg_kroky = 0;
+                shm->vysledky[r][s].pravdepodobnost_dosiahnutia = 0;
+            }
+        }
+
         for (int r_id = 0; r_id < shm->total_replikacie; r_id++) {
             if (shm->stav == SIM_STOP_REQUESTED) {
                 break;
@@ -228,16 +236,31 @@ void spusti_server(ZdielaneData_t* shm) {
                         goto koniec_simulacie;
                     }
                     //ak je policko prekazka alebo ciel, simulaciu odtial nepustam
-                    if (shm->svet[riadok][stlpec] == PREKAZKA || (riadok == 0 && stlpec == 0)) {
+                    // if (shm->svet[riadok][stlpec] == PREKAZKA) {
+                    //     //pre prekazku zapisem 0% uspesnost
+                    //     shm->vysledky[riadok][stlpec].pravdepodobnost_dosiahnutia = 0;
+                    //     shm->vysledky[riadok][stlpec].avg_kroky = 0;
+                    //     continue;
+                    // }
+                    if (riadok == 0 && stlpec == 0) {
+                        if (r_id == 0) {
+                            //pre ciel zapisem 100% uspesnost
+                            //pri 1000 replikaciach je to 1000 uspechov
+                            shm->vysledky[riadok][stlpec].pravdepodobnost_dosiahnutia = shm->total_replikacie;
+                            shm->vysledky[riadok][stlpec].avg_kroky = 0;
+                        }
+                        continue;
+                    }
+                    if (shm->svet[riadok][stlpec] == PREKAZKA) {
                         continue;
                     }
                     //spustim jednu cestu z chodca z tohto bodu
                     simuluj_chodzu_z_policka(shm, riadok, stlpec);
                 }
             }
-            //po dokonceni vsetkych policok v jednej replikacii
-            sem_post(&shm->data_ready);
-            usleep(1000000);
+            // //po dokonceni vsetkych policok v jednej replikacii
+            // sem_post(&shm->data_ready);
+            // usleep(1000000);
         }
     }
     koniec_simulacie:

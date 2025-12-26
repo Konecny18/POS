@@ -19,32 +19,47 @@ int main() {
         return -1;
     }
 
-    // 2. Volanie menu (Menu na konci nastaví shm->stav = SIM_INIT)
-    zobraz_pociatocne_menu(shm);
+    int koniec_programu = 0;
+    while (!koniec_programu) {
 
-    //rozdelenie procesov
-    pid_t pid = fork();
 
-    if (pid < 0) {
-        perror("fork");
-        shm_detach_and_destroy(shm, key);
-        return -2;
+        // 2. Volanie menu (Menu na konci nastaví shm->stav = SIM_INIT)
+        zobraz_pociatocne_menu(shm);
+
+        //rozdelenie procesov
+        pid_t pid = fork();
+
+        if (pid < 0) {
+            perror("fork");
+            shm_detach_and_destroy(shm, key);
+            return -2;
+        }
+
+        if (pid == 0) {
+            //PROCES KLIENT(dieta)
+            spusti_klienta(shm);
+            exit(0);
+        } else {
+            //PROCES SERVER(rodic)
+            spusti_server(shm);
+
+            //pockam kym dieta(klient) skonci
+            wait(NULL);
+        }
+
+        while (getchar() != '\n'); // Vyčistí buffer
+        // 3. Otázka na pokračovanie
+        printf("\nChces spustit novu simulaciu? (1 - ANO, 0 - KONIEC): ");
+        scanf("%d", &koniec_programu);
+        koniec_programu = (koniec_programu == 0); // Ak zadá 0, koniec_programu bude 1 a cyklus skončí
+
+        if (!koniec_programu) {
+            // Resetujeme stav pre ďalšie kolo
+            shm->stav = SIM_INIT;
+        }
     }
-
-    if (pid == 0) {
-        //PROCES KLIENT(dieta)
-        spusti_klienta(shm);
-        exit(0);
-    } else {
-        //PROCES SERVER(rodic)
-        spusti_server(shm);
-
-        //pockam kym dieta(klient) skonci
-        wait(NULL);
-
-        //upratovanie po simulacii
-        printf("[SERVER] Upratujem SHM a koncim\n");
-        shm_detach_and_destroy(shm, key);
-    }
+    //upratovanie po simulacii
+    printf("[SERVER] Upratujem SHM a koncim\n");
+    shm_detach_and_destroy(shm, key);
     return 0;
 }
