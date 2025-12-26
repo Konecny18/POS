@@ -4,6 +4,7 @@
 #include <sys/wait.h>
 #include "headers/ipc_shm.h"
 #include <signal.h>
+#include <string.h>
 
 #include "headers/server_logic.h"
 #include "headers/client_logic.h"
@@ -21,7 +22,9 @@ int main() {
 
     int koniec_programu = 0;
     while (!koniec_programu) {
-
+        //resetovanie dat pred kazdou simulaciou
+        memset(shm->vysledky, 0, sizeof(shm->vysledky));
+        shm->stav = SIM_INIT;
 
         // 2. Volanie menu (Menu na konci nastaví shm->stav = SIM_INIT)
         zobraz_pociatocne_menu(shm);

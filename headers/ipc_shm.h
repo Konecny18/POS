@@ -48,6 +48,10 @@ typedef struct {
 
     //riadenie a ukoncenie
     bool client_ukoncenie; //ak klient zatvori aplikaciu (server sa tiez ma ukoncit)
+
+    //praca zo suborom
+    char nazov_suboru[256];
+    bool opetovne_spustenie; //prikaz ze idem citat zo suboru
 }ZdielaneData_t;
 
 //fukcia pre pracu so zdielanov pamatou

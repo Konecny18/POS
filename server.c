@@ -5,6 +5,96 @@
 #include <stdbool.h>
 #include "headers/ipc_shm.h"
 
+void uloz_vysledky_do_suboru(ZdielaneData_t* shm) {
+    //ak nezadal nazov
+    if (shm->nazov_suboru[0] == '\0') {
+        return;
+    }
+
+    FILE * file = fopen(shm->nazov_suboru, "w");
+    if (file == NULL) {
+        perror("Nepodarilo sa otvorit subor na zapis");
+        return;
+    }
+
+    //uloz zakladne parametre
+    fprintf(file, "%d %d\n", shm->riadky, shm->stlpece);
+    fprintf(file, "%d %d\n", shm->total_replikacie, shm->K_max_kroky);
+    fprintf(file, "%d\n", shm->pocet_prekazok); // preistotu aj ked nacitavam tu ulozenu mapu
+    fprintf(file, "%f %f %f %f \n", shm->pravdepodobnost[0], shm->pravdepodobnost[1], shm->pravdepodobnost[2], shm->pravdepodobnost[3]);
+
+    //ulozenie mapy sveta (0 = prazdne, 1 = prekazka)
+    for (int i = 0; i < shm->riadky; i++) {
+        for (int j = 0; j < shm->stlpece; j++) {
+            fprintf(file, "%d ", shm->svet[i][j]);
+        }
+        fprintf(file, "\n");
+    }
+
+    //ulozenie vysledkov
+    fprintf(file, "--- VYSLEDKY ---\n");
+    for (int i = 0; i < shm->riadky; i++) {
+        for (int j = 0; j < shm->stlpece; j++) {
+            double avg = (double)shm->vysledky[i][j].avg_kroky / shm->total_replikacie;
+            double pravdepodobnost = ((double)shm->vysledky[i][j].pravdepodobnost_dosiahnutia / shm->total_replikacie * 100);
+            fprintf(file, "%.2f(%.0f%%) ", avg, pravdepodobnost);
+        }
+        fprintf(file, "\n");
+    }
+    fclose(file);
+    printf("[SERVER] Vysledky boli ulozene do suboru: %s\n", shm->nazov_suboru);
+}
+
+bool nacitaj_konfig_zo_suboru(ZdielaneData_t* shm) {
+    FILE* file = fopen(shm->nazov_suboru, "r");
+    if (file == NULL) {
+        perror("Nepodarilo sa otvorit subor na citanie");
+        return false;
+    }
+
+    //nacitanie zakladnych parametrov (riadky, stlpce, replikacie, kroky)
+    if (fscanf(file, "%d %d", &shm->riadky, &shm->stlpece) != 2) {
+        fclose(file);
+        return false;
+    }
+    if (fscanf(file, "%d %d", &shm->total_replikacie, &shm->K_max_kroky) != 2) {
+        fclose(file);
+        return false;
+    }
+
+    //nacitanie hustoty prekazok aj ked ju pri nacitani nepouzivam
+    if (fscanf(file, "%d", &shm->pocet_prekazok) != 1) {
+        fclose(file);
+        return false;
+    }
+
+    //nacitanie pravdepodobnosti pohybu (pouzivam float docasne kvoli fscanf potom convert do double)
+    float p0, p1, p2, p3;
+    if (fscanf(file, "%f %f %f %f", &p0, &p1, &p2, &p3) != 4) {
+        fclose(file);
+        return false;
+    }
+    shm->pravdepodobnost[0] = p0;
+    shm->pravdepodobnost[1] = p1;
+    shm->pravdepodobnost[2] = p2;
+    shm->pravdepodobnost[3] = p3;
+
+    //nacitanie mapy sveta (0 = prazdne, 1 = prekazka)
+    for (int i = 0; i < shm->riadky; i++) {
+        for (int j = 0; j < shm->stlpece; j++) {
+            int hodnota;
+            if (fscanf(file, "%d", &hodnota) != 1) {
+                fclose(file);
+                return false;
+            }
+            shm->svet[i][j] = hodnota;
+        }
+    }
+    //vysledky ma nezaujimaju pre novu simulacii takze zatvaram
+    fclose(file);
+    return true;
+}
+
 bool je_svet_validny(ZdielaneData_t* shm) {
     int riadky = shm->riadky;
     int stlpce = shm->stlpece;
@@ -184,16 +274,25 @@ void spusti_server(ZdielaneData_t* shm) {
     }
     srand(time(NULL));
 
-    int pokusy_generovania = 0;
-    do {
-        generuj_svet_s_prekazkami(shm, shm->pocet_prekazok);
-        pokusy_generovania++;
-        // Kontrola, či užívateľ neukončil program počas generovania (ak by trvalo dlho)
-        if (shm->stav == SIM_STOP_REQUESTED) return;
-    } while (!je_svet_validny(shm));
+    if (shm->opetovne_spustenie) {
 
-    printf("[SERVER] Svet vygenerovany na %d. pokus.\n", pokusy_generovania);
-    //generovanie sveta
+        if (!nacitaj_konfig_zo_suboru(shm)) {
+            printf("[SERVER] Chyba: nepodarilo sa nacitat subor %s\n", shm->nazov_suboru);
+            shm->stav = SIM_FINISHED;
+            sem_post(&shm->data_ready);
+            return;
+        }
+        printf("[SERVER] Svet uspesne nacitany zo suboru\n");
+    } else {
+        int pokusy_generovania = 0;
+        do {
+            generuj_svet_s_prekazkami(shm, shm->pocet_prekazok);
+            pokusy_generovania++;
+            // Kontrola, či užívateľ neukončil program počas generovania (ak by trvalo dlho)
+            if (shm->stav == SIM_STOP_REQUESTED) return;
+        } while (!je_svet_validny(shm));
+        printf("[SERVER] Svet vygenerovany na %d. pokus.\n", pokusy_generovania);
+    }
 
     //nastavenia PC stavu
     printf("[SERVER] Svet uspesne overeny cez BFS. Startujem simulaciu...\n");
@@ -235,13 +334,6 @@ void spusti_server(ZdielaneData_t* shm) {
                     if (shm->stav == SIM_STOP_REQUESTED) {
                         goto koniec_simulacie;
                     }
-                    //ak je policko prekazka alebo ciel, simulaciu odtial nepustam
-                    // if (shm->svet[riadok][stlpec] == PREKAZKA) {
-                    //     //pre prekazku zapisem 0% uspesnost
-                    //     shm->vysledky[riadok][stlpec].pravdepodobnost_dosiahnutia = 0;
-                    //     shm->vysledky[riadok][stlpec].avg_kroky = 0;
-                    //     continue;
-                    // }
                     if (riadok == 0 && stlpec == 0) {
                         if (r_id == 0) {
                             //pre ciel zapisem 100% uspesnost
@@ -264,6 +356,10 @@ void spusti_server(ZdielaneData_t* shm) {
         }
     }
     koniec_simulacie:
+    if (shm->stav != SIM_STOP_REQUESTED) {
+        printf("[SERVER] Ukladám výsledky do súboru...\n");
+        uloz_vysledky_do_suboru(shm);
+    }
     shm->stav = SIM_FINISHED;
     sem_post(&shm->data_ready); // Posledný signál pre klienta
     printf("[SERVER] Všetky replikácie dokončené.\n");
