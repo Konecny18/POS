@@ -98,8 +98,8 @@ void generuj_svet_s_prekazkami(ZdielaneData_t* shm, int percento_prekazok) {
         }
     }
 }
-//TODO pravdepodobne to bude fungovat tak ze interaktivny mod bude mat iba jednu replikaciu
-//vykresli vzdy o jednu mapu navyse cize ked dam krokov 5 tak najskor sa vykresli zaciatok a potom 5 krokov, a na konci sa vykresli finalna mapa cize to je este o jednu navyse
+
+//TODO vykresli vzdy o jednu mapu navyse cize ked dam krokov 5 tak najskor sa vykresli zaciatok a potom 5 krokov, a na konci sa vykresli finalna mapa cize to je este o jednu navyse
 void simuluj_chodzu_z_policka(ZdielaneData_t* shm, int start_r, int start_s) {
     int aktualny_r = start_r;
     int aktualny_s = start_s;
@@ -200,7 +200,6 @@ void spusti_server(ZdielaneData_t* shm) {
     shm->stav = SIM_RUNNING;
 
     if (shm->mod == INTERAKTIVNY) {
-        //TODO momentalne funguje tak ze ked vytvorim hru a zadam 10 replikacii tak vzdy bude taka ista plocha kde chodec bude vzdy generovany na tej istej ploche aj prekazky
         //TODO mozno to treba upravit tak aby som si vybral umiestnenie chodza a ukazal cestu do ciela
         int start_r = shm->riadky / 2;
         int start_s = shm->stlpece / 2;

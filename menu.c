@@ -8,34 +8,98 @@ void zobraz_pociatocne_menu(ZdielaneData_t* shm) {
     printf("=== NASTAVENIA SIMULACIE ===\n");
 
     int volba_modu;
-    printf("Vyber mod simulacie (0 - Interaktivny, 1 - Sumarny): ");
-    scanf("%d", &volba_modu);
+    do {
+        printf("Vyber mod simulacie (0 - Interaktivny, 1 - Sumarny): ");
+        if (scanf("%d", &volba_modu) != 1) { //ked zadam napr 1e tak mi to zoberie 1 e vymaze a idem zadavat dalsie udaje
+            printf("CHYBA: zadaj cele cislo\n");
+            while (getchar() != '\n'); //vycistenie buffera pretoze ked zadam 10,5 tak by mi zostalov bufferi 0.5
+            volba_modu = -1;
+            continue;
+        }
+        if (volba_modu < 0 || volba_modu > 1) {
+            printf("CHYBA: zadaj cislo 0 alebo 1\n");
+        }
+    } while (volba_modu < 0 || volba_modu > 1);
+
+
     shm->mod = (volba_modu == 0) ? INTERAKTIVNY : SUMARNY;
     //shm->mod = (SimulaciaMod_t) volba_modu;
 
     if (volba_modu == SUMARNY) {
-        printf("Zadaj pocet replikacii: ");
-        scanf("%d", &shm->total_replikacie);
+        do {
+            printf("Zadaj pocet replikacii: ");
+            if (scanf("%d", &shm->total_replikacie) != 1) {
+                printf("CHYBA: zadaj cele cislo\n");
+                while (getchar() != '\n');
+                shm->total_replikacie = 0;
+                continue;
+            }
+            if (shm->total_replikacie <= 0) {
+                printf("CHYBA: Pocet replikacii musi byt vacsi ako 0\n");
+            }
+        } while (shm->total_replikacie <= 0);
+
+
     } else {
         shm->total_replikacie = 1;
     }
 
-    //parametre simulacie
-    printf("Max. pocet krokov: ");
-    scanf("%d", &shm->K_max_kroky);
+    //parametre simulacie a kontrola na nulu a pismena
+    do {
+        printf("Max. pocet krokov: ");
+        if (scanf("%d", &shm->K_max_kroky) != 1) {
+            printf("CHYBA: zadaj cele cislo\n");
+            while (getchar() != '\n'); //vycistenie buffera
+            shm->K_max_kroky = 0; //vynutenie opakovania
+            continue;
+        }
+        if (shm->K_max_kroky <= 0) {
+            printf("CHYBA: Pocet krokov musi byt aspon 1\n");
+        }
+    } while (shm->K_max_kroky <= 0);
 
-    printf("Hustota prekazok (0-50%%): ");
-    scanf("%d", &shm->pocet_prekazok);
+
+    do {
+        printf("Hustota prekazok (0-50%%): ");
+        if (scanf("%d", &shm->pocet_prekazok) != 1) {
+            printf("CHYBA: zadaj cele cislo\n");
+            while (getchar() != '\n'); //vycistenie buffera
+            shm->pocet_prekazok = -1;
+            continue;
+        }
+        if (shm->pocet_prekazok < 0 || shm->pocet_prekazok > 50) {
+            printf("CHYBA: Hustota prekazok musi byt v rozsahu 0-50%%\n");
+        }
+    } while (shm->pocet_prekazok < 0 || shm->pocet_prekazok > 50);
+
 
     //rozmery sveta s kontrolov limitov
     do {
         printf("Pocet riadkov (max %d): ", MAX_ROWS);
-        scanf("%d", &shm->riadky);
+        if (scanf("%d", &shm->riadky) != 1) {
+            printf("CHYBA: Zadaj cele cislo!\n");
+            while(getchar() != '\n'); // Vyčistenie bufferu pri zadaní písmena
+            shm->riadky = -1; // Vynútenie opakovania cyklu
+            continue;
+        }
+
+        if (shm->riadky <= 0 || shm->riadky > MAX_ROWS) {
+            printf("CHYBA: Pocet riadkov musi byt v rozsahu 1 az %d!\n", MAX_ROWS);
+        }
     } while (shm->riadky <= 0 || shm->riadky > MAX_ROWS);
 
     do {
         printf("Pocet stlpcov (max %d): ", MAX_COLS);
-        scanf("%d", &shm->stlpece);
+        if (scanf("%d", &shm->stlpece) != 1) {
+            printf("CHYBA: Zadaj cele cislo!\n");
+            while(getchar() != '\n'); // Vyčistenie bufferu
+            shm->stlpece = -1;
+            continue;
+        }
+
+        if (shm->stlpece <= 0 || shm->stlpece > MAX_COLS) {
+            printf("CHYBA: Pocet stlpcov musi byt v rozsahu 1 az %d!\n", MAX_COLS);
+        }
     } while (shm->stlpece <= 0 || shm->stlpece > MAX_COLS);
 
     double suma;
