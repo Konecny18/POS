@@ -8,10 +8,23 @@
 #include "ipc_shm.h"
 
 /**
- * Funkcia klienta, ktora caka na signal od servera a vykresluje mapu.
+ * Hlavná funkcia klienta, ktorá riadi prijímanie signálov a vykresľovanie.
  */
 void spusti_klienta(ZdielaneData_t* shm);
+
+/**
+ * Vláknová funkcia, ktorá beží na pozadí a čaká na stlačenie klávesy 'q'.
+ */
+void* kontrola_klavestnice(void* arg);
+
+/**
+ * Vykreslí mapu sveta s aktuálnou pozíciou chodca (znak 'C').
+ */
 void vykresli_mriezku_s_chodcom(ZdielaneData_t* shm);
+
+/**
+ * Vykreslí finálnu tabuľku so štatistikami (priemerné kroky a percentá).
+ */
 void vykresli_tabulku_statistik(ZdielaneData_t* shm);
 
 #endif //SEMESTRALKA_CLIENT_LOGIC_H

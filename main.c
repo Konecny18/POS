@@ -5,64 +5,74 @@
 #include "headers/ipc_shm.h"
 #include <signal.h>
 #include <string.h>
+#include <sys/shm.h>
 
 #include "headers/server_logic.h"
 #include "headers/client_logic.h"
 #include "headers/client_menu.h"
 
 int main() {
-    key_t key = 1234; //ten isty co som zadefinoval
+    key_t key = 1234;
 
-    //vytvorenie a pripojenie zdielanej pamate
+    // 1. Vytvorenie SHM a inicializácia semaforov
     ZdielaneData_t* shm = shm_create_and_attach(key);
     if (shm == NULL) {
-        fprintf(stderr,"Nepodarilo sa vytvorit SHM.\n");
+        fprintf(stderr, "Nepodarilo sa vytvorit SHM.\n");
         return -1;
     }
 
-    int koniec_programu = 0;
-    while (!koniec_programu) {
-        //resetovanie dat pred kazdou simulaciou
+    int volba_pokracovat = 1;
+    while (volba_pokracovat) {
+        // RESET PARAMETROV PRE NOVÉ KOLO
         memset(shm->vysledky, 0, sizeof(shm->vysledky));
-        shm->stav = SIM_INIT;
+        shm->opetovne_spustenie = false; // Predvolene generujeme novú mapu
+        shm->stav = SIM_FINISHED;        // Server zatiaľ čaká
 
-        // 2. Volanie menu (Menu na konci nastaví shm->stav = SIM_INIT)
+        // 2. Volanie menu - TU sa nastaví SIM_INIT a parametre
         zobraz_pociatocne_menu(shm);
 
-        //rozdelenie procesov
+        // 3. Rozdelenie procesov
         pid_t pid = fork();
 
         if (pid < 0) {
             perror("fork");
-            shm_detach_and_destroy(shm, key);
-            return -2;
+            break;
         }
 
         if (pid == 0) {
-            //PROCES KLIENT(dieta)
+            // --- PROCES KLIENT (Dieťa) ---
             spusti_klienta(shm);
+            //odpojenie bloku od virtualnej adresnej mapy(nepotrebuje pristupovat ku zdielanej pamati)
+            shmdt(shm);
             exit(0);
         } else {
-            //PROCES SERVER(rodic)
+            // --- PROCES SERVER (Rodič) ---
             spusti_server(shm);
 
-            //pockam kym dieta(klient) skonci
+            // Počkáme na smrť klienta, aby sa nám nepomiešali výpisy v konzole
             wait(NULL);
         }
 
-        while (getchar() != '\n'); // Vyčistí buffer
-        // 3. Otázka na pokračovanie
-        printf("\nChces spustit novu simulaciu? (1 - ANO, 0 - KONIEC): ");
-        scanf("%d", &koniec_programu);
-        koniec_programu = (koniec_programu == 0); // Ak zadá 0, koniec_programu bude 1 a cyklus skončí
+        // 4. Otázka na pokračovanie
+        printf("\nChces spustit uplne novu simulaciu? (1 - ANO, 0 - KONIEC): ");
+        if (scanf("%d", &volba_pokracovat) != 1) {
+            volba_pokracovat = 0;
+        }
+        while (getchar() != '\n'); // Vyčistenie bufferu
 
-        if (!koniec_programu) {
-            // Resetujeme stav pre ďalšie kolo
-            shm->stav = SIM_INIT;
+        if (volba_pokracovat == 0) {
+            shm->stav = SIM_EXIT; // Nastavenie stavu pre finálne ukončenie
         }
     }
-    //upratovanie po simulacii
-    printf("[SERVER] Upratujem SHM a koncim\n");
+
+    // 5. Finálne upratovanie
+    printf("\n[MAIN] Uvolnujem prostriedky a koncim aplikaciu...\n");
+
+    // Zničenie semaforov (sem_destroy)
+    shm_cleanup_semaphores(shm);
+
+    // Odpojenie a odstránenie SHM zo systému (shmctl RMID)
     shm_detach_and_destroy(shm, key);
+
     return 0;
 }

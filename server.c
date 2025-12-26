@@ -309,7 +309,7 @@ void spusti_server(ZdielaneData_t* shm) {
 
         simuluj_chodzu_z_policka(shm, start_r, start_s);
 
-        usleep(200000);
+        usleep(300000);
     } else {
         //vycistenie vysledkov pre zaciatkom
         for(int r = 0; r < shm->riadky; r++) {
