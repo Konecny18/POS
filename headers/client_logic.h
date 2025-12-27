@@ -7,6 +7,20 @@
 
 #include "ipc_shm.h"
 
+
+
+// Definícia režimov zobrazenia - len pre potreby klienta
+typedef enum {
+    ZOBRAZ_PRIEMER_KROKOV,
+    ZOBRAZ_PRAVDEPODOBNOST_K
+} RezimZobrazenia_t;
+
+// Štruktúra pre vlákno, aby som mu odovzdal SHM aj lokálne nastavenie
+typedef struct {
+    ZdielaneData_t* shm;
+    RezimZobrazenia_t* p_rezim;
+} VlaknoArgs_t;
+
 /**
  * Hlavná funkcia klienta, ktorá riadi prijímanie signálov a vykresľovanie.
  */
@@ -25,6 +39,6 @@ void vykresli_mriezku_s_chodcom(ZdielaneData_t* shm);
 /**
  * Vykreslí finálnu tabuľku so štatistikami (priemerné kroky a percentá).
  */
-void vykresli_tabulku_statistik(ZdielaneData_t* shm);
+void vykresli_tabulku_statistik(ZdielaneData_t* shm, RezimZobrazenia_t rezim);
 
 #endif //SEMESTRALKA_CLIENT_LOGIC_H

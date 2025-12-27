@@ -323,8 +323,10 @@ void spusti_server(ZdielaneData_t* shm) {
             if (shm->stav == SIM_STOP_REQUESTED) {
                 break;
             }
-
             shm->aktualne_replikacie = r_id;
+            //toto by aktualizovalo tabulku nonstop (zakomentovane aby to vypocitalo a az potom vykreslilo)
+            // sem_wait(&shm->shm_mutex);
+            // sem_post(&shm->shm_mutex);
 
             //cyklus pre sumarny rezim
             //pre kazde policko sveta
@@ -340,8 +342,8 @@ void spusti_server(ZdielaneData_t* shm) {
                             //pri 1000 replikaciach je to 1000 uspechov
                             shm->vysledky[riadok][stlpec].pravdepodobnost_dosiahnutia = shm->total_replikacie;
                             shm->vysledky[riadok][stlpec].avg_kroky = 0;
+                            continue;
                         }
-                        continue;
                     }
                     if (shm->svet[riadok][stlpec] == PREKAZKA) {
                         continue;
@@ -351,7 +353,7 @@ void spusti_server(ZdielaneData_t* shm) {
                 }
             }
             // //po dokonceni vsetkych policok v jednej replikacii
-            // sem_post(&shm->data_ready);
+            // sem_post(&shm->data_ready);1
             // usleep(1000000);
         }
     }

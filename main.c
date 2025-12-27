@@ -49,16 +49,18 @@ int main() {
             // --- PROCES SERVER (Rodič) ---
             spusti_server(shm);
 
+            // 4. Otázka na pokračovanie
             // Počkáme na smrť klienta, aby sa nám nepomiešali výpisy v konzole
             wait(NULL);
+            printf("\nChces spustit uplne novu simulaciu? (1 - ANO, 0 - KONIEC): ");
+            if (scanf("%d", &volba_pokracovat) != 1) {
+                volba_pokracovat = 0;
+            }
+            while (getchar() != '\n'); // Vyčistenie bufferu
         }
 
-        // 4. Otázka na pokračovanie
-        printf("\nChces spustit uplne novu simulaciu? (1 - ANO, 0 - KONIEC): ");
-        if (scanf("%d", &volba_pokracovat) != 1) {
-            volba_pokracovat = 0;
-        }
-        while (getchar() != '\n'); // Vyčistenie bufferu
+
+
 
         if (volba_pokracovat == 0) {
             shm->stav = SIM_EXIT; // Nastavenie stavu pre finálne ukončenie
