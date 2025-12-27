@@ -13,6 +13,7 @@ void vykresli_legendu(ZdielaneData_t* shm) {
 
     if (shm->stav == SIM_FINISHED) {
         printf(" STAV: Simulácia úspešne dokončená. Prezeráte si výsledky.\n");
+        printf("[KLIENT] zadaj prikaz: \n");
     } else if (shm->stav == SIM_RUNNING) {
         printf(" STAV: Simulácia práve prebieha...\n");
     }
@@ -115,6 +116,9 @@ void spusti_klienta(ZdielaneData_t* shm) {
     pthread_create(&thread_id, NULL, kontrola_klavestnice, &args);
     //pthread_detach(thread_id);//vlakno pobezi nezavisle
 
+    // Príznak pre sumárny režim
+    bool prve_vykreslenie_sumaru = true;
+
     while (1) {
         //cakanie na signal
         //Klient zastavi a caka kym server neurobi sem_post
@@ -122,14 +126,24 @@ void spusti_klienta(ZdielaneData_t* shm) {
         //zamknutie cesty
         sem_wait(&shm->shm_mutex);
 
-        //vymazanie obrazovky, aby simulacia nebezala pod seba
-        printf("\033[H\033[J");
         if (shm->mod == INTERAKTIVNY) {
+            //vymazanie obrazovky, aby simulacia nebezala pod seba
+            printf("\033[H\033[J");
             // Tu zavoláš tvoju existujúcu logiku s cyklami pre mriežku a 'C'
             vykresli_mriezku_s_chodcom(shm);
+
         } else if (shm->mod == SUMARNY){
-            printf("\n >>>FINALNE VYSLEDKY<<<\n");
-            vykresli_tabulku_statistik(shm, aktualny_rezim);
+            //tento if tu je aby som videl logs servera a klienta aspon v prvom zobrazeni potom mi ich vymaze a iba tabulku nakresli
+            if (prve_vykreslenie_sumaru) {
+                printf("\n >>>FINALNE VYSLEDKY<<<\n");
+                vykresli_tabulku_statistik(shm, aktualny_rezim);
+                prve_vykreslenie_sumaru = false;
+            } else {
+                printf("\033[H\033[J");
+                printf("\n >>>FINALNE VYSLEDKY<<<\n");
+                vykresli_tabulku_statistik(shm, aktualny_rezim);
+            }
+
         } else {
             printf("[KLIENT] Sumarny mod: simulujem %d replikacii. Caka sa na vysledky...\n", shm->total_replikacie);
         }
@@ -147,6 +161,5 @@ void spusti_klienta(ZdielaneData_t* shm) {
     }
     pthread_cancel(thread_id);
     printf("[KLIENT] Simulacia ukoncena\n");
-    printf("[KLIENT] zadaj prikaz: \n");
 }
 

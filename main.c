@@ -52,15 +52,24 @@ int main() {
             // 4. Otázka na pokračovanie
             // Počkáme na smrť klienta, aby sa nám nepomiešali výpisy v konzole
             wait(NULL);
-            printf("\nChces spustit uplne novu simulaciu? (1 - ANO, 0 - KONIEC): ");
-            if (scanf("%d", &volba_pokracovat) != 1) {
-                volba_pokracovat = 0;
-            }
-            while (getchar() != '\n'); // Vyčistenie bufferu
+            do {
+                printf("\nChces spustit uplne novu simulaciu? (1 - ANO, 0 - KONIEC): ");
+
+                // Kontrola, či bolo zadané číslo
+                if (scanf("%d", &volba_pokracovat) != 1) {
+                    printf("Chyba: Musis zadat cislo (0 alebo 1)!\n");
+                    volba_pokracovat = -1; // Nastavíme nevalidnú hodnotu, aby cyklus pokračoval
+                }
+                // Kontrola, či je číslo v povolenom rozsahu
+                else if (volba_pokracovat != 0 && volba_pokracovat != 1) {
+                    printf("Chyba: Zadaj bud 0 pre koniec alebo 1 pre novu simulaciu.\n");
+                }
+
+                // Vyčistenie bufferu (odstráni zvyšné znaky a \n)
+                while (getchar() != '\n');
+
+            } while (volba_pokracovat != 0 && volba_pokracovat != 1);
         }
-
-
-
 
         if (volba_pokracovat == 0) {
             shm->stav = SIM_EXIT; // Nastavenie stavu pre finálne ukončenie
