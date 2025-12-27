@@ -16,6 +16,15 @@
 
 #define SHM_KEY 1234 //nahodny kluc pre identifikaciu pamate
 
+/**
+ * @brief Vytvorí a pripojí segment zdieľanej pamäte pre štruktúru ZdielaneData_t.
+ *
+ * Alokuje segment SHM pomocou `shmget`, pripojí ho pomocou `shmat`, vyčistí
+ * obsah na nulu a inicializuje potrebné semafory (`shm_mutex`, `data_ready`).
+ *
+ * @param key Kľúč používaný pre `shmget`.
+ * @return Ukazovateľ na pripojený segment typu `ZdielaneData_t` alebo NULL pri chybe.
+ */
 ZdielaneData_t* shm_create_and_attach(key_t key) {
     int shm_id;
     ZdielaneData_t* shm_ptr;
@@ -51,6 +60,15 @@ ZdielaneData_t* shm_create_and_attach(key_t key) {
     return shm_ptr;
 }
 
+/**
+ * @brief Odpojí a (ak je to možné) odstráni segment zdieľanej pamäte z OS.
+ *
+ * Funkcia bezpečne odpojí segment SHM (shmdt) a pokúsi sa nastaviť príznak
+ * na odstránenie segmentu (IPC_RMID). Ak segment už neexistuje, ignoruje chybu.
+ *
+ * @param shm_ptr Ukazovateľ na pripojený segment.
+ * @param key Kľúč, ktorý sa použije na získanie ID segmentu pri odstraňovaní.
+ */
 void shm_detach_and_destroy(ZdielaneData_t* shm_ptr, key_t key) {
     if (shm_ptr == NULL) {
         return;
@@ -75,6 +93,13 @@ void shm_detach_and_destroy(ZdielaneData_t* shm_ptr, key_t key) {
     }
 }
 
+/**
+ * @brief Zničí inicializované semafory v zdieľanej štruktúre.
+ *
+ * Zavolá `sem_destroy` pre `shm_mutex` a `data_ready` ak `shm_ptr` nie je NULL.
+ *
+ * @param shm_ptr Ukazovateľ na pripojený segment.
+ */
 void shm_cleanup_semaphores(ZdielaneData_t* shm_ptr) {
     if (shm_ptr != NULL) {
         sem_destroy(&shm_ptr->shm_mutex);

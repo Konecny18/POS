@@ -1,8 +1,0 @@
-//
-// Created by damko on 16/12/2025.
-//
-
-#ifndef SEMESTRALKA_CLIENT_RENDER_H
-#define SEMESTRALKA_CLIENT_RENDER_H
-
-#endif //SEMESTRALKA_CLIENT_RENDER_H

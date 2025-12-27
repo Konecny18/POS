@@ -10,18 +10,32 @@
 
 #include "common.h"
 
+/**
+ * @brief Režim simulácie (interaktívny alebo sumárny).
+ */
 typedef enum {
     INTERAKTIVNY = 0,
     SUMARNY = 1
 }SimulaciaMod_t;
 
-//struktura pre uchovanie vysledkov pre jedno policko
+/**
+ * @brief Výsledky pre jedno políčko v mriežke.
+ *
+ * Uchováva kumulatívny súčet krokov (pre výpočet priemerov), počítadlo úspechov
+ * a príznak, či bolo políčko navštívené pri BFS validácii sveta.
+ */
 typedef struct {
     double avg_kroky; //avg pocet krokov na dosiahnutie [0,0]
     double pravdepodobnost_dosiahnutia; //pravdepodobnost dosiahnutia [0,0] po max K(krokoch)
     bool navstivene; //zistuje ci je policko dosiahnutelne/navstivene(pre generovanie prekazok)
 }Policko_vysledok;
 
+/**
+ * @brief Hlavná dátová štruktúra zdieľanej pamäte medzi serverom a klientom.
+ *
+ * Obsahuje semafory, nastavenia simulácie, stav, mapu sveta, výsledky, súborové
+ * nastavenia a riadiace príznaky.
+ */
 typedef struct {
     //synch prostriedky
     sem_t shm_mutex; //binarny semafor na ochranu pred subeznym zapisom/citanim
@@ -54,10 +68,25 @@ typedef struct {
     bool opetovne_spustenie; //prikaz ze idem citat zo suboru
 }ZdielaneData_t;
 
-//fukcia pre pracu so zdielanov pamatou
-//implemetovane v samotnom c subore
+/**
+ * @brief Vytvorí (ak treba) a pripojí segment zdieľanej pamäte.
+ *
+ * Alokuje segment SHM a inicializuje semafory a vráti ukazovateľ na pamäť.
+ * @param key Kľúč pre segment.
+ * @return Ukazovateľ na alokovanú a pripojenú `ZdielaneData_t` alebo NULL pri chybe.
+ */
 ZdielaneData_t* shm_create_and_attach(key_t key); // Vracia pointer, pretože SHM alokuje pamäť dynamicky
+
+/**
+ * @brief Odpojí a odstráni segment zdieľanej pamäte (ak existuje).
+ *
+ * Odpojí lokálne pripojenie a pokúsi sa označiť segment pre odstránenie.
+ */
 void shm_detach_and_destroy(ZdielaneData_t* shm_ptr, key_t key);
+
+/**
+ * @brief Zničí semafory, ktoré boli inicializované v `shm_create_and_attach`.
+ */
 void shm_cleanup_semaphores(ZdielaneData_t* shm_ptr);
 
 #endif //IPC_H

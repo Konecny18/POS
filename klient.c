@@ -3,6 +3,14 @@
 #include <pthread.h>
 #include "headers/client_logic.h"
 
+/**
+ * @brief Vypíše legendu/ovládanie a krátky stav simulácie.
+ *
+ * Zobrazí informácie o klávesových skratkách pre klienta a stručný
+ * stav simulácie (prebieha / dokončená). Používa sa pri každom prekreslení obrazovky.
+ *
+ * @param shm Ukazovateľ na zdieľanú pamäť obsahujúcu stav simulácie.
+ */
 void vykresli_legendu(ZdielaneData_t* shm) {
     printf("\n------------------------------------------------------------\n");
     printf(" OVLÁDANIE:\n");
@@ -19,10 +27,16 @@ void vykresli_legendu(ZdielaneData_t* shm) {
     }
 }
 
-
 /**
- * Spracuje vstupy, ktoré ovplyvňujú len lokálne zobrazenie daného klienta.
- * Vráti true, ak došlo k zmene, ktorá vyžaduje prekreslenie.
+ * @brief Prepne lokálny režim zobrazenia pre jednotlivého klienta.
+ *
+ * Táto funkcia mení lokálny stav zobrazenia (priemer krokov vs. pravdepodobnosť)
+ * bez ovplyvnenia ostatných klientov. Je určená pre spracovanie lokálnych klávesových
+ * vstupov.
+ *
+ * @param klavesa Kód stlačenej klávesy.
+ * @param p_rezim Ukazovateľ na premennú obsahujúcu aktuálny režim zobrazenia;
+ *                 funkcia prepne hodnotu na druhý režim.
  */
 void prepni_lokalny_rezim_zobrazenia(int klavesa, RezimZobrazenia_t* p_rezim) {
     if (klavesa == 'v' || klavesa == 'V') {
@@ -30,6 +44,16 @@ void prepni_lokalny_rezim_zobrazenia(int klavesa, RezimZobrazenia_t* p_rezim) {
     }
 }
 
+/**
+ * @brief Vlákno pre asynchrónne snímanie vstupu z klávesnice.
+ *
+ * Spracováva klávesové skratky: ukončenie ('q'), prepnutie módu ('m') a
+ * prepnutie lokálneho zobrazenia ('v'). Mení stav v zdieľanej pamäti pod mutexom
+ * a notifikujte server/klienta cez semafóry.
+ *
+ * @param arg Ukazovateľ na štruktúru typu VlaknoArgs_t (obsahuje `shm` a `p_rezim`).
+ * @return NULL pri ukončení vlákna.
+ */
 void* kontrola_klavestnice(void* arg) {
     VlaknoArgs_t* args = (VlaknoArgs_t*)arg;
     ZdielaneData_t* shm = args->shm;
@@ -65,6 +89,14 @@ void* kontrola_klavestnice(void* arg) {
     return NULL;
 }
 
+/**
+ * @brief Vykreslí mriežku sveta s aktuálnou pozíciou chodca v interaktívnom móde.
+ *
+ * Vykreslí znak 'C' na pozíciu chodca, '#' pre prekážky a '.' pre voľné políčka.
+ * Používa `shm->aktualna_pozicia_chodca` a `shm->svet`.
+ *
+ * @param shm Ukazovateľ na zdieľanú pamäť obsahujúcu mapu a pozíciu chodca.
+ */
 void vykresli_mriezku_s_chodcom(ZdielaneData_t* shm) {
     printf("\n ---INTERAKTIVNA SIMULACIA---\n");
     for (int riadok = 0; riadok < shm->riadky; riadok++) {
@@ -81,6 +113,15 @@ void vykresli_mriezku_s_chodcom(ZdielaneData_t* shm) {
     }
 }
 
+/**
+ * @brief Vykreslí tabuľku štatistík v sumárnom móde podľa vybraného režimu.
+ *
+ * V závislosti od `rezim` vypíše buď priemerný počet krokov alebo percentuálnu
+ * úspešnosť dosiahnutia cieľa pre každé políčko. Pre prekážky vypíše '###'.
+ *
+ * @param shm Ukazovateľ na zdieľanú pamäť obsahujúcu výsledky.
+ * @param rezim Režim zobrazenia (ZOBRAZ_PRIEMER_KROKOV alebo ZOBRAZ_PRAVDEPODOBNOST_K).
+ */
 void vykresli_tabulku_statistik(ZdielaneData_t* shm, RezimZobrazenia_t rezim) {
     printf("\n ---SUMARNY MOD---\n");
     printf("Zobrazenie: %s\n\n", (rezim == ZOBRAZ_PRIEMER_KROKOV) ? "PRIEMERNY POCET KROKOV" : "PRAVDEPODOBNOST DOSIAHNUTIA (K)");
@@ -104,65 +145,135 @@ void vykresli_tabulku_statistik(ZdielaneData_t* shm, RezimZobrazenia_t rezim) {
     // printf("\n");
 }
 
+/**
+ * @brief Rozhoduje o spôsobe vykreslenia dát na základe aktuálneho módu simulácie.
+ * * Táto funkcia zabezpečuje vymazanie obrazovky a volanie príslušných podprogramov
+ * pre interaktívny (mapa s chodcom) alebo sumárny (tabuľka štatistík) mód.
+ * * @param shm Smerník na zdieľanú pamäť.
+ * @param rezim Aktuálne zvolený typ zobrazenia v sumárnom móde (priemer/pravdepodobnosť).
+ */
+void obsluz_vykreslovanie(ZdielaneData_t* shm, RezimZobrazenia_t rezim) {
+    // ANSI kód pre návrat kurzora na začiatok a vymazanie obrazovky
+    printf("\033[H\033[J");
+
+    if (shm->mod == INTERAKTIVNY) {
+        vykresli_mriezku_s_chodcom(shm);
+    } else if (shm->mod == SUMARNY) {
+        printf("\n >>> FINALNE VYSLEDKY <<<\n");
+        vykresli_tabulku_statistik(shm, rezim);
+    } else {
+        printf("[KLIENT] Simulujem %d replikacii. Caka sa na vysledky...\n", shm->total_replikacie);
+    }
+
+    vykresli_legendu(shm);
+}
+
+/**
+ * @brief Hlavná riadiaca logika klientskej časti aplikácie.
+ * * Inicializuje vlákno pre vstup z klávesnice a vstupuje do hlavného cyklu,
+ * kde čaká na signály od servera (cez semafor data_ready). Po prijatí signálu
+ * zabezpečí bezpečný prístup k dátam a ich vykreslenie.
+ * * @param shm Smerník na zdieľanú pamäť.
+ */
 void spusti_klienta(ZdielaneData_t* shm) {
-    //inicializacia na predvolenu hodnotu
     RezimZobrazenia_t aktualny_rezim = ZOBRAZ_PRIEMER_KROKOV;
-    VlaknoArgs_t args;
-    args.shm = shm;
-    args.p_rezim = &aktualny_rezim;
+    VlaknoArgs_t args = { .shm = shm, .p_rezim = &aktualny_rezim };
+    pthread_t thread_id;
 
     printf("[KLIENT] Spusteny, cakam na data...\n");
 
-    pthread_t thread_id;
-    pthread_create(&thread_id, NULL, kontrola_klavestnice, &args);
-    //pthread_detach(thread_id);//vlakno pobezi nezavisle
-
-    // Príznak pre sumárny režim
-    bool prve_vykreslenie_sumaru = true;
+    // Vytvorenie vlákna pre asynchrónne čítanie klávesnice
+    if (pthread_create(&thread_id, NULL, kontrola_klavestnice, &args) != 0) {
+        perror("[KLIENT] Nepodarilo sa vytvorit vlakno pre klavesnicu");
+        return;
+    }
 
     while (1) {
-        //cakanie na signal
-        //Klient zastavi a caka kym server neurobi sem_post
+        // Čakanie na notifikáciu od servera, že sú dostupné nové dáta
         sem_wait(&shm->data_ready);
-        //zamknutie cesty
+
+        // Uzamknutie zdieľanej pamäte pred čítaním
         sem_wait(&shm->shm_mutex);
 
-        if (shm->mod == INTERAKTIVNY) {
-            //vymazanie obrazovky, aby simulacia nebezala pod seba
-            printf("\033[H\033[J");
-            // Tu zavoláš tvoju existujúcu logiku s cyklami pre mriežku a 'C'
-            vykresli_mriezku_s_chodcom(shm);
-
-        } else if (shm->mod == SUMARNY){
-            //tento if tu je aby som videl logs servera a klienta aspon v prvom zobrazeni potom mi ich vymaze a iba tabulku nakresli
-            if (prve_vykreslenie_sumaru) {
-                // printf("\n >>>FINALNE VYSLEDKY<<<\n");
-                // vykresli_tabulku_statistik(shm, aktualny_rezim);
-                prve_vykreslenie_sumaru = false;
-            } else {
-                printf("\033[H\033[J");
-                // printf("\n >>>FINALNE VYSLEDKY<<<\n");
-                // vykresli_tabulku_statistik(shm, aktualny_rezim);
-            }
-            printf("\n >>>FINALNE VYSLEDKY<<<\n");
-            vykresli_tabulku_statistik(shm, aktualny_rezim);
-
-        } else {
-            printf("[KLIENT] Sumarny mod: simulujem %d replikacii. Caka sa na vysledky...\n", shm->total_replikacie);
-        }
-
-        // TU VYPÍŠEME LEGENDU - bude pod tabuľkou/mapou
-        vykresli_legendu(shm);
-
-        if (shm->stav == SIM_EXIT || shm->stav == SIM_STOP_REQUESTED) {
+        // Kontrola, či neprišla požiadavka na ukončenie
+        if (shm->stav == SIM_EXIT || shm->stav == SIM_STOP_REQUESTED || shm->stav == SIM_FINISHED) {
+            // Ak je simulácia dokončená, urobíme ešte jeden posledný render
+            obsluz_vykreslovanie(shm, aktualny_rezim);
             sem_post(&shm->shm_mutex);
-            break; // Vyskočí z while a skončí proces klienta
+            break;
         }
 
-        //odomknutie
+        // Vykreslenie aktuálneho stavu
+        obsluz_vykreslovanie(shm, aktualny_rezim);
+
+        // Uvoľnenie zdieľanej pamäte
         sem_post(&shm->shm_mutex);
     }
+
+    // Korektné ukončenie pomocného vlákna a návrat
     pthread_cancel(thread_id);
-    printf("[KLIENT] Simulacia ukoncena\n");
+    pthread_join(thread_id, NULL);
+    printf("[KLIENT] Simulacia ukoncena.\n");
 }
 
+// void spusti_klienta(ZdielaneData_t* shm) {
+//     //inicializacia na predvolenu hodnotu
+//     RezimZobrazenia_t aktualny_rezim = ZOBRAZ_PRIEMER_KROKOV;
+//     VlaknoArgs_t args;
+//     args.shm = shm;
+//     args.p_rezim = &aktualny_rezim;
+//
+//     printf("[KLIENT] Spusteny, cakam na data...\n");
+//
+//     pthread_t thread_id;
+//     pthread_create(&thread_id, NULL, kontrola_klavestnice, &args);
+//     //pthread_detach(thread_id);//vlakno pobezi nezavisle
+//
+//     // Príznak pre sumárny režim
+//     bool prve_vykreslenie_sumaru = true;
+//
+//     while (1) {
+//         //cakanie na signal
+//         //Klient zastavi a caka kym server neurobi sem_post
+//         sem_wait(&shm->data_ready);
+//         //zamknutie cesty
+//         sem_wait(&shm->shm_mutex);
+//
+//         if (shm->mod == INTERAKTIVNY) {
+//             //vymazanie obrazovky, aby simulacia nebezala pod seba
+//             printf("\033[H\033[J");
+//             // Tu zavoláš tvoju existujúcu logiku s cyklami pre mriežku a 'C'
+//             vykresli_mriezku_s_chodcom(shm);
+//
+//         } else if (shm->mod == SUMARNY){
+//             //tento if tu je aby som videl logs servera a klienta aspon v prvom zobrazeni potom mi ich vymaze a iba tabulku nakresli
+//             if (prve_vykreslenie_sumaru) {
+//                 // printf("\n >>>FINALNE VYSLEDKY<<<\n");
+//                 // vykresli_tabulku_statistik(shm, aktualny_rezim);
+//                 prve_vykreslenie_sumaru = false;
+//             } else {
+//                 printf("\033[H\033[J");
+//                 // printf("\n >>>FINALNE VYSLEDKY<<<\n");
+//                 // vykresli_tabulku_statistik(shm, aktualny_rezim);
+//             }
+//             printf("\n >>>FINALNE VYSLEDKY<<<\n");
+//             vykresli_tabulku_statistik(shm, aktualny_rezim);
+//
+//         } else {
+//             printf("[KLIENT] Sumarny mod: simulujem %d replikacii. Caka sa na vysledky...\n", shm->total_replikacie);
+//         }
+//
+//         // TU VYPÍŠEME LEGENDU - bude pod tabuľkou/mapou
+//         vykresli_legendu(shm);
+//
+//         if (shm->stav == SIM_EXIT || shm->stav == SIM_STOP_REQUESTED) {
+//             sem_post(&shm->shm_mutex);
+//             break; // Vyskočí z while a skončí proces klienta
+//         }
+//
+//         //odomknutie
+//         sem_post(&shm->shm_mutex);
+//     }
+//     pthread_cancel(thread_id);
+//     printf("[KLIENT] Simulacia ukoncena\n");
+// }

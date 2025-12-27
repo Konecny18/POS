@@ -4,7 +4,17 @@
 
 #include "headers/client_menu.h"
 
-// Pomocná funkcia na bezpečné načítanie celého čísla v rozsahu
+/**
+ * @brief Bezpečne načíta celé číslo z konzoly v zadanom rozsahu.
+ *
+ * Funkcia opakuje výzvu kým používateľ nezadá platné celé číslo v intervale
+ * [min, max]. Pri neplatnom vstupe vyprázdni vstupný buffer a vypíše chybovú správu.
+ *
+ * @param otazka Text výzvy, ktorý sa vypíše používateľovi.
+ * @param min Minimálna povolená hodnota (vrátane).
+ * @param max Maximálna povolená hodnota (vrátane).
+ * @return Načítaná celočíselná hodnota v rozsahu [min, max].
+ */
 int nacitaj_cele_cislo(const char* otazka, int min, int max) {
     int hodnota;
     while (1) {
@@ -22,7 +32,15 @@ int nacitaj_cele_cislo(const char* otazka, int min, int max) {
     }
 }
 
-// Pomocná funkcia na zadanie názvu súboru s kontrolou .txt
+/**
+ * @brief Načíta názov súboru od používateľa s kontrolou prípony ".txt".
+ *
+ * Opakuje výzvu až kým používateľ nezadá reťazec končiaci na ".txt".
+ * Výsledný názov je uložený do bufferu `kam_ulozit` (max 255 znakov).
+ *
+ * @param kam_ulozit Buffer kam sa uloží zadaný názov súboru (min veľkosť 256).
+ * @param text_vyzvy Text výzvy, ktorý sa vypíše používateľovi.
+ */
 void nacitaj_nazov_suboru(char* kam_ulozit, const char* text_vyzvy) {
     while (1) {
         printf("%s (musi koncit na .txt): ", text_vyzvy);
@@ -35,7 +53,16 @@ void nacitaj_nazov_suboru(char* kam_ulozit, const char* text_vyzvy) {
     }
 }
 
-// Pomocná funkcia pre pravdepodobnosti
+/**
+ * @brief Načíta a validuje štyri smerové pravdepodobnosti z konzoly.
+ *
+ * Požiada používateľa o pravdepodobnosti pre smery "Hore", "Dole", "Vlavo", "Vpravo".
+ * Hodnoty sa zadávajú ako desatinné čísla s bodkou (napr. 0.25). Funkcia zabezpečí,
+ * že každá hodnota je v intervale [0.0, 1.0] a že súčet všetkých štyroch hodnôt je
+ * približne 1.0 (povolená odchýlka 0.001).
+ *
+ * @param shm Ukazovateľ na zdieľanú pamäť, kde sú pravdepodobnosti uložené do `shm->pravdepodobnost`.
+ */
 void nacitaj_pravdepodobnosti(ZdielaneData_t* shm) {
     double suma;
     char vstup_text[20];
@@ -66,6 +93,16 @@ void nacitaj_pravdepodobnosti(ZdielaneData_t* shm) {
     } while (suma < 0.999 || suma > 1.001);
 }
 
+/**
+ * @brief Zobrazí počiatočné menu a načíta nastavenia simulácie od používateľa.
+ *
+ * Funkcia obsluhuje výber medzi novou náhodnou simuláciou a opätovným spustením
+ * zo súboru. Podľa zvoleného módu vyzve používateľa na relevantné parametre
+ * (počet replikácií, kroky, hustota prekážok, rozmery mapy, pravdepodobnosti).
+ * Výsledok uloží do zdieľanej pamäte `shm` a nastaví `shm->stav = SIM_INIT`.
+ *
+ * @param shm Ukazovateľ na zdieľanú pamäť, kam sa uložia zvolené nastavenia.
+ */
 void zobraz_pociatocne_menu(ZdielaneData_t* shm) {
     printf("=== HLAVNE MENU ===\n");
     printf("1 - Nova nahodna simulacia\n");

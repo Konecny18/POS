@@ -1,3 +1,12 @@
+/**
+ * @file main.c
+ * @brief Hlavný vstupný bod aplikácie - vytvorí SHM, spustí menu, klienta a server.
+ *
+ * Program spúšťa interakciu: načítanie parametrov z menu, forkovanie procesu na
+ * klienta a server, vykonanie simulácie a následné upratanie zdrojov (semafóry,
+ * SHM). Po dokončení otázka používateľa, či spustiť novú simuláciu alebo ukončiť.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -11,6 +20,15 @@
 #include "headers/client_logic.h"
 #include "headers/client_menu.h"
 
+/**
+ * @brief Hlavná funkcia aplikácie.
+ *
+ * Vytvorí a inicializuje zdieľanú pamäť, zobrazí menu pre nastavenie simulácie,
+ * rozdelí proces na klienta a server (fork), čaká na dokončenie a zabezpečí
+ * uvoľnenie všetkých prostriedkov pred ukončením programu.
+ *
+ * @return 0 pri úspechu, nenulový kód pri chybe.
+ */
 int main() {
     key_t key = 1234;
 

@@ -16,7 +16,6 @@ add_executable(Semestralka
         headers/common.h
         headers/ipc_shm.h
         headers/client_menu.h
-        headers/client_render.h
         menu.c
 )
 
