@@ -311,6 +311,8 @@ void spusti_server(ZdielaneData_t* shm) {
 
         usleep(300000);
     } else {
+        //zabezpeci aby klilent neuvidi rozpracovane data z minulej simulacie
+        sem_wait(&shm->shm_mutex);
         //vycistenie vysledkov pre zaciatkom
         for(int r = 0; r < shm->riadky; r++) {
             for(int s = 0; s < shm->stlpece; s++) {
@@ -318,6 +320,7 @@ void spusti_server(ZdielaneData_t* shm) {
                 shm->vysledky[r][s].pravdepodobnost_dosiahnutia = 0;
             }
         }
+        sem_post(&shm->shm_mutex);
 
         for (int r_id = 0; r_id < shm->total_replikacie; r_id++) {
             if (shm->stav == SIM_STOP_REQUESTED) {
@@ -340,10 +343,12 @@ void spusti_server(ZdielaneData_t* shm) {
                         if (r_id == 0) {
                             //pre ciel zapisem 100% uspesnost
                             //pri 1000 replikaciach je to 1000 uspechov
+                            sem_wait(&shm->shm_mutex);
                             shm->vysledky[riadok][stlpec].pravdepodobnost_dosiahnutia = shm->total_replikacie;
                             shm->vysledky[riadok][stlpec].avg_kroky = 0;
-                            continue;
+                            sem_post(&shm->shm_mutex);
                         }
+                        continue;
                     }
                     if (shm->svet[riadok][stlpec] == PREKAZKA) {
                         continue;

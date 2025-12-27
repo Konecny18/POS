@@ -34,6 +34,9 @@ ZdielaneData_t* shm_create_and_attach(key_t key) {
         return NULL;
     }
 
+    //vymaze vsetko co v pamati zostalo z predchadzajucich spusteni
+    memset(shm_ptr, 0, sizeof(ZdielaneData_t));
+
     //inicializacia semaforov
     //shm_mutex: pshared=1 (zdielany medzi procesmi), hodnota=1 (odomknuty)
     if (sem_init(&shm_ptr->shm_mutex, 1, 1) == -1) {

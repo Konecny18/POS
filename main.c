@@ -52,6 +52,7 @@ int main() {
             // 4. Otázka na pokračovanie
             // Počkáme na smrť klienta, aby sa nám nepomiešali výpisy v konzole
             wait(NULL);
+            //kontrola aby zadal pouzivatel bud 0 alebo 1
             do {
                 printf("\nChces spustit uplne novu simulaciu? (1 - ANO, 0 - KONIEC): ");
 

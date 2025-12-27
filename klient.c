@@ -49,6 +49,7 @@ void* kontrola_klavestnice(void* arg) {
 
         // 2. Prepnutie MODU (Zdieľané - prepne všetkým používateľom v SHM)
         if (c == 'm' || c == 'M') {
+            printf("\033[H\033[J");
             sem_wait(&shm->shm_mutex);
             shm->mod = (shm->mod == INTERAKTIVNY) ? SUMARNY : INTERAKTIVNY;
             sem_post(&shm->shm_mutex);
@@ -135,14 +136,16 @@ void spusti_klienta(ZdielaneData_t* shm) {
         } else if (shm->mod == SUMARNY){
             //tento if tu je aby som videl logs servera a klienta aspon v prvom zobrazeni potom mi ich vymaze a iba tabulku nakresli
             if (prve_vykreslenie_sumaru) {
-                printf("\n >>>FINALNE VYSLEDKY<<<\n");
-                vykresli_tabulku_statistik(shm, aktualny_rezim);
+                // printf("\n >>>FINALNE VYSLEDKY<<<\n");
+                // vykresli_tabulku_statistik(shm, aktualny_rezim);
                 prve_vykreslenie_sumaru = false;
             } else {
                 printf("\033[H\033[J");
-                printf("\n >>>FINALNE VYSLEDKY<<<\n");
-                vykresli_tabulku_statistik(shm, aktualny_rezim);
+                // printf("\n >>>FINALNE VYSLEDKY<<<\n");
+                // vykresli_tabulku_statistik(shm, aktualny_rezim);
             }
+            printf("\n >>>FINALNE VYSLEDKY<<<\n");
+            vykresli_tabulku_statistik(shm, aktualny_rezim);
 
         } else {
             printf("[KLIENT] Sumarny mod: simulujem %d replikacii. Caka sa na vysledky...\n", shm->total_replikacie);
