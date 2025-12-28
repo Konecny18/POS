@@ -96,4 +96,3 @@ void prepni_lokalny_rezim_zobrazenia(int klavesa, RezimZobrazenia_t* p_rezim);
 void obsluz_vykreslovanie(ZdielaneData_t* shm, RezimZobrazenia_t rezim);
 
 #endif // SEMESTRALKA_CLIENT_LOGIC_H
-

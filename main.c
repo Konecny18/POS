@@ -11,11 +11,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include "headers/ipc_shm.h"
 #include <signal.h>
 #include <string.h>
 #include <sys/shm.h>
 
+#include "headers/ipc_shm.h"
 #include "headers/server_logic.h"
 #include "headers/client_logic.h"
 #include "headers/client_menu.h"

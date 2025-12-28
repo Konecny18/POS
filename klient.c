@@ -188,7 +188,7 @@ void spusti_klienta(ZdielaneData_t* shm) {
         return;
     }
 
-    while (1) {
+    while (shm->stav != SIM_STOP_REQUESTED && shm->stav != SIM_EXIT) {
         // Čakanie na notifikáciu od servera, že sú dostupné nové dáta
         sem_wait(&shm->data_ready);
 
@@ -200,7 +200,7 @@ void spusti_klienta(ZdielaneData_t* shm) {
             // Ak je simulácia dokončená, urobíme ešte jeden posledný render
             obsluz_vykreslovanie(shm, aktualny_rezim);
             sem_post(&shm->shm_mutex);
-            break;
+            // break;
         }
 
         // Vykreslenie aktuálneho stavu
@@ -215,65 +215,3 @@ void spusti_klienta(ZdielaneData_t* shm) {
     pthread_join(thread_id, NULL);
     printf("[KLIENT] Simulacia ukoncena.\n");
 }
-
-// void spusti_klienta(ZdielaneData_t* shm) {
-//     //inicializacia na predvolenu hodnotu
-//     RezimZobrazenia_t aktualny_rezim = ZOBRAZ_PRIEMER_KROKOV;
-//     VlaknoArgs_t args;
-//     args.shm = shm;
-//     args.p_rezim = &aktualny_rezim;
-//
-//     printf("[KLIENT] Spusteny, cakam na data...\n");
-//
-//     pthread_t thread_id;
-//     pthread_create(&thread_id, NULL, kontrola_klavestnice, &args);
-//     //pthread_detach(thread_id);//vlakno pobezi nezavisle
-//
-//     // Príznak pre sumárny režim
-//     bool prve_vykreslenie_sumaru = true;
-//
-//     while (1) {
-//         //cakanie na signal
-//         //Klient zastavi a caka kym server neurobi sem_post
-//         sem_wait(&shm->data_ready);
-//         //zamknutie cesty
-//         sem_wait(&shm->shm_mutex);
-//
-//         if (shm->mod == INTERAKTIVNY) {
-//             //vymazanie obrazovky, aby simulacia nebezala pod seba
-//             printf("\033[H\033[J");
-//             // Tu zavoláš tvoju existujúcu logiku s cyklami pre mriežku a 'C'
-//             vykresli_mriezku_s_chodcom(shm);
-//
-//         } else if (shm->mod == SUMARNY){
-//             //tento if tu je aby som videl logs servera a klienta aspon v prvom zobrazeni potom mi ich vymaze a iba tabulku nakresli
-//             if (prve_vykreslenie_sumaru) {
-//                 // printf("\n >>>FINALNE VYSLEDKY<<<\n");
-//                 // vykresli_tabulku_statistik(shm, aktualny_rezim);
-//                 prve_vykreslenie_sumaru = false;
-//             } else {
-//                 printf("\033[H\033[J");
-//                 // printf("\n >>>FINALNE VYSLEDKY<<<\n");
-//                 // vykresli_tabulku_statistik(shm, aktualny_rezim);
-//             }
-//             printf("\n >>>FINALNE VYSLEDKY<<<\n");
-//             vykresli_tabulku_statistik(shm, aktualny_rezim);
-//
-//         } else {
-//             printf("[KLIENT] Sumarny mod: simulujem %d replikacii. Caka sa na vysledky...\n", shm->total_replikacie);
-//         }
-//
-//         // TU VYPÍŠEME LEGENDU - bude pod tabuľkou/mapou
-//         vykresli_legendu(shm);
-//
-//         if (shm->stav == SIM_EXIT || shm->stav == SIM_STOP_REQUESTED) {
-//             sem_post(&shm->shm_mutex);
-//             break; // Vyskočí z while a skončí proces klienta
-//         }
-//
-//         //odomknutie
-//         sem_post(&shm->shm_mutex);
-//     }
-//     pthread_cancel(thread_id);
-//     printf("[KLIENT] Simulacia ukoncena\n");
-// }
