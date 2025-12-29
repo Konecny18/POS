@@ -388,6 +388,7 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd) {
 
     // Hlavný cyklus replikácií
     for (int r_id = 0; r_id < shm->total_replikacie; r_id++) {
+        printf("\033[H\033[J");
         if (shm->stav == SIM_STOP_REQUESTED) {
             write(pipe_write_fd, "SERVER: Zastavujem vypocty na ziadost klienta.", 46);
             return;
@@ -423,6 +424,24 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd) {
                 }
             }
         }
+
+        // Po dokončení jednej replikácie: pošli notifikáciu klientovi a krátky log cez pipe
+        // Aktualizujeme ukazovateľ aktualne_replikacie pod mutexom pre konzistenciu.
+        sem_wait(&shm->shm_mutex);
+        shm->aktualne_replikacie = r_id; // index tej prave dokončenej replikacie (0-based)
+        sem_post(&shm->shm_mutex);
+
+        // Pošli krátku správu do pipe, aby sa klient mohol informovať aj textovo.
+        if (pipe_write_fd >= 0) {
+            char msg[128];
+            snprintf(msg, sizeof(msg), "SERVER: Dokoncena replikacia %d/%d", r_id + 1, shm->total_replikacie);
+            posli_log(pipe_write_fd, msg);
+        }
+
+        // Prebudíme klienta, aby vykreslil aktuálny stav (vrátane aktualne_replikacie)
+        sem_post(&shm->data_ready);
+        // Krátke pozastavenie, aby mal používateľ čas prečítať notifikáciu / update
+        usleep(10000);
     }
 }
 

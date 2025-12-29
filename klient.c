@@ -37,8 +37,12 @@ void* kontrola_pipe(void* arg) {
  */
 void vykresli_legendu(ZdielaneData_t* shm) {
     // PRIDANÉ: Zobrazenie aktuálnej replikácie podľa bodu 10 zadania
-    if (shm->mod == SUMARNY) {
-        printf(" REPLIKÁCIA: %d / %d\n", shm->aktualne_replikacie + 1, shm->total_replikacie);
+    if (shm->total_replikacie > 1) {
+        int aktual = shm->aktualne_replikacie + 1;
+        if (aktual < 1) aktual = 0; // ochrana, ak este nie je nastavene
+        if (aktual > shm->total_replikacie) aktual = shm->total_replikacie;
+        printf("\n");
+        printf(" REPLIKÁCIA: %d / %d\n", aktual, shm->total_replikacie);
     }
 
     printf("\n------------------------------------------------------------\n");
@@ -161,24 +165,27 @@ void vykresli_mriezku_s_chodcom(ZdielaneData_t* shm) {
  * @param rezim Režim zobrazenia (ZOBRAZ_PRIEMER_KROKOV alebo ZOBRAZ_PRAVDEPODOBNOST_K).
  */
 void vykresli_tabulku_statistik(ZdielaneData_t* shm, RezimZobrazenia_t rezim) {
-    printf("\n ---SUMARNY MOD---\n");
-    printf("Zobrazenie: %s\n\n", (rezim == ZOBRAZ_PRIEMER_KROKOV) ? "PRIEMERNY POCET KROKOV" : "PRAVDEPODOBNOST DOSIAHNUTIA (K)");
+    //vypise tabulku a tie vypisi az na finalnej replikacii
+    if ((shm->aktualne_replikacie + 1) == shm->total_replikacie) {
+        printf("\n ---SUMARNY MOD---\n");
+        printf("Zobrazenie: %s\n\n", (rezim == ZOBRAZ_PRIEMER_KROKOV) ? "PRIEMERNY POCET KROKOV" : "PRAVDEPODOBNOST DOSIAHNUTIA (K)");
 
-    for (int riadok = 0; riadok < shm->riadky; riadok++) {
-        for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
-            if (shm->svet[riadok][stlpec] == PREKAZKA) {
-                printf(" ### ");
-            } else {
-                if (rezim == ZOBRAZ_PRIEMER_KROKOV) {
-                    double priemer = (double)shm->vysledky[riadok][stlpec].avg_kroky / shm->total_replikacie;
-                    printf("%5.2f ", priemer);
+        for (int riadok = 0; riadok < shm->riadky; riadok++) {
+            for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
+                if (shm->svet[riadok][stlpec] == PREKAZKA) {
+                    printf(" ### ");
                 } else {
-                    double uspesnost = ((double)shm->vysledky[riadok][stlpec].pravdepodobnost_dosiahnutia / shm->total_replikacie * 100);
-                    printf("%3.0f%%  ", uspesnost);
+                    if (rezim == ZOBRAZ_PRIEMER_KROKOV) {
+                        double priemer = (double)shm->vysledky[riadok][stlpec].avg_kroky / shm->total_replikacie;
+                        printf("%5.2f ", priemer);
+                    } else {
+                        double uspesnost = ((double)shm->vysledky[riadok][stlpec].pravdepodobnost_dosiahnutia / shm->total_replikacie * 100);
+                        printf("%3.0f%%  ", uspesnost);
+                    }
                 }
             }
+            printf("\n");
         }
-        printf("\n");
     }
     // printf("\n");
 }
@@ -196,7 +203,8 @@ void obsluz_vykreslovanie(ZdielaneData_t* shm, RezimZobrazenia_t rezim) {
 
     if (shm->mod == INTERAKTIVNY) {
         vykresli_mriezku_s_chodcom(shm);
-    } else if (shm->mod == SUMARNY) {
+        //vypise finalne vysledky az na poslednej replikacii
+    } else if (shm->mod == SUMARNY && ((shm->aktualne_replikacie + 1) == shm->total_replikacie)) {
         printf("\n >>> FINALNE VYSLEDKY <<<\n");
         vykresli_tabulku_statistik(shm, rezim);
     } else {
