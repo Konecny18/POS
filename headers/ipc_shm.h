@@ -75,7 +75,7 @@ typedef struct {
  * @param key Kľúč pre segment.
  * @return Ukazovateľ na alokovanú a pripojenú `ZdielaneData_t` alebo NULL pri chybe.
  */
-ZdielaneData_t* shm_create_and_attach(key_t key); // Vracia pointer, pretože SHM alokuje pamäť dynamicky
+ZdielaneData_t* shm_create_and_attach(key_t key); // Vracia pointer, pretoze SHM alokuje pamäť dynamicky
 
 /**
  * @brief Odpojí a odstráni segment zdieľanej pamäte (ak existuje).
@@ -88,5 +88,14 @@ void shm_detach_and_destroy(ZdielaneData_t* shm_ptr, key_t key);
  * @brief Zničí semafory, ktoré boli inicializované v `shm_create_and_attach`.
  */
 void shm_cleanup_semaphores(ZdielaneData_t* shm_ptr);
+
+/**
+ * @brief Zresetuje polia výsledkov / per-run stavy v zdieľanej pamäti pred novou simuláciou.
+ *
+ * Vyčistí pole `vysledky`, nastaví `aktualne_replikacie` a ďalšie per-run príznaky na
+ * predvolené hodnoty a vyprázdni semafor `data_ready` (ak obsahuje zostávajúce signály),
+ * aby nový klient nezačal okamžite spracovávať staré notifikácie.
+ */
+void shm_reset_results(ZdielaneData_t* shm);
 
 #endif //IPC_H

@@ -31,6 +31,14 @@
  */
 int main() {
     key_t key = 1234;
+    int pipe_fd[2];
+
+    int old_shmid = shmget(key, sizeof(ZdielaneData_t), 0666);
+    if (old_shmid != -1) {
+        // Ak existuje, odstránime ju, aby sme začali s čistým štítom
+        shmctl(old_shmid, IPC_RMID, NULL);
+        printf("[MAIN] Vyčistená stará zdieľaná pamäť po nečakanom ukončení.\n");
+    }
 
     // 1. Vytvorenie SHM a inicializácia semaforov
     ZdielaneData_t* shm = shm_create_and_attach(key);
@@ -42,9 +50,15 @@ int main() {
     int volba_pokracovat = 1;
     while (volba_pokracovat) {
         // RESET PARAMETROV PRE NOVÉ KOLO
-        memset(shm->vysledky, 0, sizeof(shm->vysledky));
+        // Reset per-run fields so old results are not visible when starting a new simulation
+        shm_reset_results(shm);
         shm->opetovne_spustenie = false; // Predvolene generujeme novú mapu
         shm->stav = SIM_FINISHED;        // Server zatiaľ čaká
+
+        if (pipe(pipe_fd) == -1) {
+            perror("pipe");
+            return -1;
+        }
 
         // 2. Volanie menu - TU sa nastaví SIM_INIT a parametre
         zobraz_pociatocne_menu(shm);
@@ -58,29 +72,72 @@ int main() {
         }
 
         if (pid == 0) {
-            // --- PROCES KLIENT (Dieťa) ---
-            spusti_klienta(shm);
+            // --- PROCES SERVER (Dieťa) ---
+            close(pipe_fd[0]); //server necita z pipe
+
+            // Tu musí bežať SERVER a dostane zápisový koniec pipe
+            spusti_server(shm, pipe_fd[1]);
+
+            close(pipe_fd[1]);
             //odpojenie bloku od virtualnej adresnej mapy(nepotrebuje pristupovat ku zdielanej pamati)
             shmdt(shm);
             exit(0);
         } else {
-            // --- PROCES SERVER (Rodič) ---
-            spusti_server(shm);
+            // --- PROCES KLIENT (Rodič) ---
+            close(pipe_fd[1]); // Klient nezapisuje do pipe
 
+            // OPRAVA: Tu musí bežať KLIENT a dostane čítací koniec pipe
+            spusti_klienta(shm, pipe_fd[0]);
+
+            close(pipe_fd[0]);
             // 4. Otázka na pokračovanie
             // Počkáme na smrť klienta, aby sa nám nepomiešali výpisy v konzole
-            wait(NULL);
+            // --- PRIDAJTE TENTO BLOK ---
+            printf("[MAIN] Posielam signal na ukoncenie servera (PID: %d)...\n", pid);
+            // Po návrate klienta počkáme, aby server mohol korektne ukončiť výpočty.
+            // Nechceme ho hneď zabíjať - najprv počkáme niekoľko sekúnd, potom
+            // pošleme SIGTERM a nakoniec SIGKILL ako posledný prostriedok.
+            printf("[MAIN] Cakam na ukoncenie servera (PID: %d)...\n", pid);
+            int wait_seconds = 0;
+            int status;
+            while (wait_seconds < 5) {
+                pid_t r = waitpid(pid, &status, WNOHANG);
+                if (r == pid) {
+                    // server uz skoncilo
+                    break;
+                }
+                sleep(1);
+                wait_seconds++;
+            }
+            if (wait_seconds >= 5) {
+                // pokus o normalne ukoncenie
+                printf("[MAIN] Server nereaguje, posielam SIGTERM (PID: %d)...\n", pid);
+                kill(pid, SIGTERM);
+                sleep(1);
+                pid_t r2 = waitpid(pid, &status, WNOHANG);
+                if (r2 != pid) {
+                    printf("[MAIN] Server stale bezi, posielam SIGKILL (PID: %d)...\n", pid);
+                    kill(pid, SIGKILL);
+                    waitpid(pid, &status, 0);
+                }
+            } else {
+                printf("[MAIN] Server ukoncil sa sam (PID: %d)\n", pid);
+            }
+
             //kontrola aby zadal pouzivatel bud 0 alebo 1
             do {
                 printf("\nChces spustit uplne novu simulaciu? (1 - ANO, 0 - KONIEC): ");
+                fflush(stdout);
 
                 // Kontrola, či bolo zadané číslo
-                if (scanf("%d", &volba_pokracovat) != 1) {
+                if (scanf(" %d", &volba_pokracovat) != 1) {
                     printf("Chyba: Musis zadat cislo (0 alebo 1)!\n");
+                    while (getchar() != '\n');
                     volba_pokracovat = -1; // Nastavíme nevalidnú hodnotu, aby cyklus pokračoval
+                    continue;
                 }
                 // Kontrola, či je číslo v povolenom rozsahu
-                else if (volba_pokracovat != 0 && volba_pokracovat != 1) {
+                if (volba_pokracovat != 0 && volba_pokracovat != 1) {
                     printf("Chyba: Zadaj bud 0 pre koniec alebo 1 pre novu simulaciu.\n");
                 }
 

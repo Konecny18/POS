@@ -1,7 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>
+
 #include "headers/client_logic.h"
+
+void* kontrola_pipe(void* arg) {
+    VlaknoArgs_t* args = (VlaknoArgs_t*)arg;
+    char buffer[256];
+
+    //read je blokujuce vlakno tu bude spat kym server nieco neposle
+    while (read(args->pipe_read_fd, buffer, sizeof(buffer)) > 0) {
+        printf("\n [NOTIFIKACIA SERVERA]: %s\n", buffer);
+    }
+    return NULL;
+}
+
 
 /**
  * @brief Vypíše legendu/ovládanie a krátky stav simulácie.
@@ -63,12 +77,21 @@ void* kontrola_klavestnice(void* arg) {
 
         //ukoncenie pomoc stalecnia q
         if (c == 'q' || c == 'Q') {
-            sem_wait(&shm->shm_mutex);
+            // sem_wait(&shm->shm_mutex);
+            // shm->stav = SIM_STOP_REQUESTED;
+            // sem_post(&shm->shm_mutex);
+            //
+            // sem_post(&shm->data_ready);
+
+            // 1. Zmeníme stav OKAMŽITE bez čakania na mutex
+            // Pri jednoduchom zápise do int v SHM to nespôsobí pád
             shm->stav = SIM_STOP_REQUESTED;
-            sem_post(&shm->shm_mutex);
+
+            // 2. Prebudíme hlavné vlákno klienta
             sem_post(&shm->data_ready);
+
             printf("[KLIENT] ukoncuje aplikaciu\n");
-            break;
+            return NULL;
         }
 
         // 2. Prepnutie MODU (Zdieľané - prepne všetkým používateľom v SHM)
@@ -175,10 +198,11 @@ void obsluz_vykreslovanie(ZdielaneData_t* shm, RezimZobrazenia_t rezim) {
  * zabezpečí bezpečný prístup k dátam a ich vykreslenie.
  * * @param shm Smerník na zdieľanú pamäť.
  */
-void spusti_klienta(ZdielaneData_t* shm) {
+void spusti_klienta(ZdielaneData_t* shm, int pipe_read_fd) {
     RezimZobrazenia_t aktualny_rezim = ZOBRAZ_PRIEMER_KROKOV;
-    VlaknoArgs_t args = { .shm = shm, .p_rezim = &aktualny_rezim };
-    pthread_t thread_id;
+    pthread_t thread_id, pipe_thread_id;
+    VlaknoArgs_t args = { .shm = shm, .p_rezim = &aktualny_rezim, .pipe_read_fd = pipe_read_fd };
+
 
     printf("[KLIENT] Spusteny, cakam na data...\n");
 
@@ -188,30 +212,49 @@ void spusti_klienta(ZdielaneData_t* shm) {
         return;
     }
 
-    while (shm->stav != SIM_STOP_REQUESTED && shm->stav != SIM_EXIT) {
+    if (pthread_create(&pipe_thread_id, NULL, kontrola_pipe, &args) != 0) {
+        perror("[KLIENT] Nepodarilo sa vytvorit vlakno pre pipe");
+        pthread_cancel(thread_id);
+        return;
+    }
+
+    while (/*shm->stav != SIM_STOP_REQUESTED && shm->stav != SIM_EXIT*/1) {
         // Čakanie na notifikáciu od servera, že sú dostupné nové dáta
         sem_wait(&shm->data_ready);
+
+        //kvoli tomu ze vlakno mi tu vyselo ked som zadal vela udajov a predcasne som ukoncil simulaciu tak som bol zaseknuty
+        if (shm->stav == SIM_STOP_REQUESTED || shm->stav == SIM_EXIT) {
+            break; // Okamžite vyskočíme z cyklu vykresľovania
+        }
 
         // Uzamknutie zdieľanej pamäte pred čítaním
         sem_wait(&shm->shm_mutex);
 
-        // Kontrola, či neprišla požiadavka na ukončenie
-        if (shm->stav == SIM_EXIT || shm->stav == SIM_STOP_REQUESTED || shm->stav == SIM_FINISHED) {
-            // Ak je simulácia dokončená, urobíme ešte jeden posledný render
-            obsluz_vykreslovanie(shm, aktualny_rezim);
-            sem_post(&shm->shm_mutex);
-            // break;
-        }
-
         // Vykreslenie aktuálneho stavu
         obsluz_vykreslovanie(shm, aktualny_rezim);
 
+        int stav_po_vykresleni = shm->stav;
+
+        // Kontrola, či neprišla požiadavka na ukončenie
+        // if (shm->stav == SIM_EXIT || shm->stav == SIM_STOP_REQUESTED || shm->stav == SIM_FINISHED) {
+        //     // Ak je simulácia dokončená, urobíme ešte jeden posledný render
+        //     //obsluz_vykreslovanie(shm, aktualny_rezim);
+        //     sem_post(&shm->shm_mutex);
+        //     break;
+        // }
         // Uvoľnenie zdieľanej pamäte
         sem_post(&shm->shm_mutex);
+
+        if (stav_po_vykresleni == SIM_FINISHED) {
+
+        }
     }
 
     // Korektné ukončenie pomocného vlákna a návrat
     pthread_cancel(thread_id);
+    pthread_cancel(pipe_thread_id);
+
+    pthread_join(pipe_thread_id, NULL);
     pthread_join(thread_id, NULL);
     printf("[KLIENT] Simulacia ukoncena.\n");
 }

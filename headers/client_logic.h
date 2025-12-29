@@ -40,6 +40,7 @@ typedef enum {
 typedef struct {
     ZdielaneData_t* shm;
     RezimZobrazenia_t* p_rezim;
+    int pipe_read_fd;
 } VlaknoArgs_t;
 
 /**
@@ -48,7 +49,7 @@ typedef struct {
  * Spúšťa vlákno na čítanie klávesnice, čaká na semafór `data_ready` a volá
  * vykresľovacie funkcie podľa aktuálneho módu v `shm`.
  */
-void spusti_klienta(ZdielaneData_t* shm);
+void spusti_klienta(ZdielaneData_t* shm, int pipe_read_fd);
 
 /**
  * @brief Vláknová funkcia, ktorá beží na pozadí a spracúva stlačenia kláves.

@@ -57,6 +57,9 @@ ZdielaneData_t* shm_create_and_attach(key_t key) {
         perror("sem_init data_ready");
     }
 
+    // Ensure results area is clean initially
+    shm_reset_results(shm_ptr);
+
     return shm_ptr;
 }
 
@@ -104,5 +107,47 @@ void shm_cleanup_semaphores(ZdielaneData_t* shm_ptr) {
     if (shm_ptr != NULL) {
         sem_destroy(&shm_ptr->shm_mutex);
         sem_destroy(&shm_ptr->data_ready);
+    }
+}
+
+/**
+ * @brief Reset per-run result fields in shared memory.
+ *
+ * This clears the aggregated results (vysledky) and per-run counters so that
+ * starting a new simulation does not show leftover data from previous runs.
+ * It also attempts to drain the `data_ready` semaphore to remove any stale
+ * notifications.
+ */
+void shm_reset_results(ZdielaneData_t* shm) {
+    if (shm == NULL) return;
+
+    // Clear result arrays under mutex protection if semaphore is initialized
+    // Try to acquire mutex; if sem_wait fails we still attempt to clear without it
+    if (sem_wait(&shm->shm_mutex) == 0) {
+        for (int r = 0; r < shm->riadky; r++) {
+            for (int s = 0; s < shm->stlpece; s++) {
+                shm->vysledky[r][s].avg_kroky = 0.0;
+                shm->vysledky[r][s].pravdepodobnost_dosiahnutia = 0.0;
+                shm->vysledky[r][s].navstivene = false;
+            }
+        }
+        shm->aktualne_replikacie = 0;
+        // leave other persistent fields (nazov_suboru, pravdepodobnost, svet) intact
+        sem_post(&shm->shm_mutex);
+    } else {
+        // fallback: zero memory region conservatively (only up to configured dimensions)
+        for (int r = 0; r < shm->riadky; r++) {
+            for (int s = 0; s < shm->stlpece; s++) {
+                shm->vysledky[r][s].avg_kroky = 0.0;
+                shm->vysledky[r][s].pravdepodobnost_dosiahnutia = 0.0;
+                shm->vysledky[r][s].navstivene = false;
+            }
+        }
+        shm->aktualne_replikacie = 0;
+    }
+
+    // Drain any leftover data_ready signals so client threads don't immediately wake
+    while (sem_trywait(&shm->data_ready) == 0) {
+        // loop until empty
     }
 }

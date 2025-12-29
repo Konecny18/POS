@@ -3,7 +3,13 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <string.h>
+
 #include "headers/ipc_shm.h"
+
+void posli_log(int pipe_write_fd, const char* sprava) {
+    write(pipe_write_fd, sprava, strlen(sprava) + 1); //+1 kvoli \0
+}
 
 /**
  * @brief Uloží výsledky simulácie a konfiguráciu sveta do súboru.
@@ -360,7 +366,7 @@ bool inicializuj_svet_servera(ZdielaneData_t* shm) {
  * spustí z neho simuláciu náhodnej chôdze. Špeciálne ošetruje cieľový bod [0,0].
  * * @param shm Smerník na zdieľanú pamäť.
  */
-void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm) {
+void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd) {
     // Reset výsledkov v zdieľanej pamäti pod mutexom
     sem_wait(&shm->shm_mutex);
     for(int r = 0; r < shm->riadky; r++) {
@@ -373,12 +379,24 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm) {
 
     // Hlavný cyklus replikácií
     for (int r_id = 0; r_id < shm->total_replikacie; r_id++) {
-        if (shm->stav == SIM_STOP_REQUESTED) break;
+        if (shm->stav == SIM_STOP_REQUESTED) {
+            write(pipe_write_fd, "SERVER: Zastavujem vypocty na ziadost klienta.", 46);
+            return;
+        }
         shm->aktualne_replikacie = r_id;
+
+        // V server_logic.c v hlavnom cykle replikácií
+        if (shm->aktualne_replikacie % 1000 == 0) {
+            usleep(1); // Na mikrosekundu uvoľní procesor pre klienta
+        }
 
         for (int riadok = 0; riadok < shm->riadky; riadok++) {
             for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
-                if (shm->stav == SIM_STOP_REQUESTED) return;
+                // Kontrola v každom políčku (veľmi dôležité pre veľké mapy)
+                if (shm->stav == SIM_STOP_REQUESTED) {
+                    // Log už posielam o úroveň vyššie, tu stačí return
+                    return;
+                }
 
                 // Bod [0,0] je cieľ - automaticky 100% úspešnosť, 0 krokov
                 if (riadok == 0 && stlpec == 0) {
@@ -406,46 +424,67 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm) {
  * * @param shm Smerník na zdieľanú pamäť.
  */
 //TODO mozno to treba upravit tak aby som si vybral umiestnenie chodza a ukazal cestu do ciela
-void spusti_server(ZdielaneData_t* shm) {
+void spusti_server(ZdielaneData_t* shm, int pipe_write_fd) {
     printf("[SERVER] Čakám na inicializáciu menu klientom...\n");
 
     // Aktívne čakanie na štart z menu
     while (shm->stav != SIM_INIT) {
         if (shm->stav == SIM_STOP_REQUESTED) return;
-        usleep(100000);
+        usleep(10000);
     }
     srand(time(NULL));
 
+    posli_log(pipe_write_fd, "SERVER: inicializujem svet...");
+
     // Príprava sveta (načítanie/generovanie)
     if (!inicializuj_svet_servera(shm)) {
+        if (shm->stav != SIM_STOP_REQUESTED) {
+            posli_log(pipe_write_fd, "Server: Chyba pri inicializacii sveta!");
+        } else {
+            posli_log(pipe_write_fd, "Server: Inicializacia zrusena pouzivatelom.");
+        }
+
+        sem_wait(&shm->shm_mutex); // Zabezpečenie konzistencie stavu
         shm->stav = SIM_FINISHED;
+        sem_post(&shm->shm_mutex);
+
         sem_post(&shm->data_ready);
         return;
     }
 
-    printf("[SERVER] Svet pripravený. Štartujem simuláciu...\n");
+    posli_log(pipe_write_fd, "Server: Svet pripraveny, startujem simulaciu.");
     shm->stav = SIM_RUNNING;
 
     if (shm->mod == INTERAKTIVNY) {
         // Spustenie jednej trajektórie zo stredu mapy
+        posli_log(pipe_write_fd, "Server: Bezi interaktivny mod...");
         int start_r = shm->riadky / 2;
         int start_s = shm->stlpece / 2;
         shm->aktualne_replikacie = 0;
 
         simuluj_chodzu_z_policka(shm, start_r, start_s);
-        usleep(300000); // Krátka pauza na doznenie vizualizácie
+        usleep(30000); // Krátka pauza na doznenie vizualizácie
     } else {
         // Hromadný výpočet pre všetky políčka
-        vykonaj_sumarnu_simulaciu(shm);
+        posli_log(pipe_write_fd, "Server: Bezi vypocet sumarneho modu...");
+        vykonaj_sumarnu_simulaciu(shm, pipe_write_fd);
     }
 
     // Finálne uloženie dát a upratovanie stavu
     if (shm->stav != SIM_STOP_REQUESTED) {
-        printf("[SERVER] Ukladám výsledky do súboru...\n");
+        posli_log(pipe_write_fd, "Server: Ukladam vysledky do suboru...");
         uloz_vysledky_do_suboru(shm);
+        // Simulácia dobehla prirodzene -> nastavíme FINISHED
+        sem_wait(&shm->shm_mutex);
+        shm->stav = SIM_FINISHED;
+        sem_post(&shm->shm_mutex);
+        posli_log(pipe_write_fd, "Server: Simulacia uspesne ukoncena.");
+    } else {
+        posli_log(pipe_write_fd, "Server: Simulacia prerusena pouzivatelom.");
+        // Stav zostáva SIM_STOP_REQUESTED, klient sa vráti do menu
     }
 
-    shm->stav = SIM_FINISHED;
-    sem_post(&shm->data_ready); // Prebudenie klienta pre finálne zobrazenie
+    // Prebudenie klienta pre finálne zobrazenie alebo pre návrat do menu
+    sem_post(&shm->data_ready);
     printf("[SERVER] Simulácia ukončená.\n");
 }
