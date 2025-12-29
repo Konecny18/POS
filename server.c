@@ -395,10 +395,10 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd) {
         }
         shm->aktualne_replikacie = r_id;
 
-        // V server_logic.c v hlavnom cykle replikácií
-        if (shm->aktualne_replikacie % 1000 == 0) {
-            usleep(1); // Na mikrosekundu uvoľní procesor pre klienta
-        }
+        // // V server_logic.c v hlavnom cykle replikácií
+        // if (shm->aktualne_replikacie % 1000 == 0) {
+        //     usleep(1); // Na mikrosekundu uvoľní procesor pre klienta
+        // }
 
         for (int riadok = 0; riadok < shm->riadky; riadok++) {
             for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
@@ -441,7 +441,8 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd) {
         // Prebudíme klienta, aby vykreslil aktuálny stav (vrátane aktualne_replikacie)
         sem_post(&shm->data_ready);
         // Krátke pozastavenie, aby mal používateľ čas prečítať notifikáciu / update
-        usleep(10000);
+        //cim menej casu tak rychlejsie pojde program
+        usleep(1000);
     }
 }
 

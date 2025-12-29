@@ -100,9 +100,8 @@ int main() {
             spusti_klienta(shm, pipe_fd[0]);
 
             close(pipe_fd[0]);
-            // 4. Otázka na pokračovanie
+
             // Počkáme na smrť klienta, aby sa nám nepomiešali výpisy v konzole
-            // --- PRIDAJTE TENTO BLOK ---
             printf("[MAIN] Posielam signal na ukoncenie servera (PID: %d)...\n", pid);
             // Po návrate klienta počkáme, aby server mohol korektne ukončiť výpočty.
             // Nechceme ho hneď zabíjať - najprv počkáme niekoľko sekúnd, potom
@@ -133,6 +132,7 @@ int main() {
             } else {
                 printf("[MAIN] Server ukoncil sa sam (PID: %d)\n", pid);
             }
+            // 4. Otázka na pokračovanie
 
             //kontrola aby zadal pouzivatel bud 0 alebo 1
             do {
