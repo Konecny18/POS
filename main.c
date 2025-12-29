@@ -63,6 +63,16 @@ int main() {
         // 2. Volanie menu - TU sa nastaví SIM_INIT a parametre
         zobraz_pociatocne_menu(shm);
 
+        // Ak používateľ zvolil ukončenie v menu (volba 0), ukončíme hlavnú slučku a vykonáme upratovanie
+        if (shm->stav == SIM_EXIT) {
+            printf("[MAIN] Pouzivatel zvolil ukoncenie aplikacie v menu. Ukoncujem...\n");
+            // zatvorime pipe fds, ktore sme vytvorili pred volanim menu
+            close(pipe_fd[0]);
+            close(pipe_fd[1]);
+            volba_pokracovat = 0;
+            break;
+        }
+
         // 3. Rozdelenie procesov
         pid_t pid = fork();
 

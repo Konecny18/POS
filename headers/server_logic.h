@@ -96,4 +96,11 @@ bool inicializuj_svet_servera(ZdielaneData_t* shm);
  */
 void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd);
 
+/**
+ * @brief posiela log spravy cez pipe
+ *
+ * Implementovany v server.c; declarovane tu ak by to chcel aj niekdo iny pouzit
+ */
+void posli_log(int pipe_write_fd, const char* sprava);
+
 #endif

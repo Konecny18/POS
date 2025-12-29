@@ -7,6 +7,15 @@
 
 #include "headers/ipc_shm.h"
 
+/**
+ * @brief Pošle krátku textovú správu klientovi cez pipe.
+ *
+ * Funkcia zapíše ukončený C-string do zadaného zápisového konca pipe.
+ * Je to jednoduchý wrapper pre `write` so zarovnaním na \0.
+ *
+ * @param pipe_write_fd Deskriptor na zápisový koniec pipe.
+ * @param sprava Ukazovateľ na C-string správu (musí byť \0-ukončený).
+ */
 void posli_log(int pipe_write_fd, const char* sprava) {
     write(pipe_write_fd, sprava, strlen(sprava) + 1); //+1 kvoli \0
 }

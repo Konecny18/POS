@@ -105,13 +105,18 @@ void nacitaj_pravdepodobnosti(ZdielaneData_t* shm) {
  */
 void zobraz_pociatocne_menu(ZdielaneData_t* shm) {
     printf("=== HLAVNE MENU ===\n");
+    printf("pokial chces ukoncit aplikaciu hocikedy tak stlac q a enter\n");
+    printf("0 - Ukoncenie aplikacie\n");
     printf("1 - Nova nahodna simulacia\n");
     printf("2 - Opatovne spustenie (nacitat zo suboru)\n");
 
-    int volba = nacitaj_cele_cislo("Tvoja volba: ", 1, 2);
+    int volba = nacitaj_cele_cislo("Tvoja volba: ",0, 2);
     shm->opetovne_spustenie = (volba == 2);
 
-    if (shm->opetovne_spustenie) {
+    if (volba == 0) {
+        shm->stav = SIM_EXIT; // Nastavíme stav na EXIT, aby hlavný cyklus vedel, že končíme
+        return; // Vrátime sa do main.c, kde cyklus skončí a uvoľní SHM
+    } else if(shm->opetovne_spustenie) {
         nacitaj_nazov_suboru(shm->nazov_suboru, "Zadaj nazov suboru pre NACITANIE");
         shm->mod = (nacitaj_cele_cislo("Mod (0-Interaktivny., 1-Sumarny.): ", 0, 1) == 0) ? INTERAKTIVNY : SUMARNY;
     } else {
@@ -134,6 +139,9 @@ void zobraz_pociatocne_menu(ZdielaneData_t* shm) {
         nacitaj_pravdepodobnosti(shm);
     }
 
+
+
+    // ak sme tu, nastavujeme simulacny stav na INIT a pokracujeme
     shm->stav = SIM_INIT;
     printf("\n[MENU] Nastavenia pripravene, simulacia startuje...\n");
 }

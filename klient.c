@@ -5,6 +5,16 @@
 
 #include "headers/client_logic.h"
 
+/**
+ * @brief Vlákno, ktoré číta správy zo serveru cez pipe a vypisuje notifikácie.
+ *
+ * Táto funkcia beží ako samostatné vlákno; blokujúco číta z `args->pipe_read_fd`
+ * a vypisuje prijaté C-string správy od servera do konzoly. Ukončí sa keď
+ * read vráti <= 0 (pipe zatvorené).
+ *
+ * @param arg Očakáva `VlaknoArgs_t*` obsahujúci `pipe_read_fd`.
+ * @return NULL po ukončení vlákna.
+ */
 void* kontrola_pipe(void* arg) {
     VlaknoArgs_t* args = (VlaknoArgs_t*)arg;
     char buffer[256];
@@ -26,6 +36,11 @@ void* kontrola_pipe(void* arg) {
  * @param shm Ukazovateľ na zdieľanú pamäť obsahujúcu stav simulácie.
  */
 void vykresli_legendu(ZdielaneData_t* shm) {
+    // PRIDANÉ: Zobrazenie aktuálnej replikácie podľa bodu 10 zadania
+    if (shm->mod == SUMARNY) {
+        printf(" REPLIKÁCIA: %d / %d\n", shm->aktualne_replikacie + 1, shm->total_replikacie);
+    }
+
     printf("\n------------------------------------------------------------\n");
     printf(" OVLÁDANIE:\n");
     printf(" [V] - Prepni zobrazenie (Priemer / Pravdepodobnosť)\n");
