@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
+#include <sys/socket.h>
 
 #include "headers/ipc_shm.h"
 
@@ -375,7 +376,7 @@ bool inicializuj_svet_servera(ZdielaneData_t* shm) {
  * spustí z neho simuláciu náhodnej chôdze. Špeciálne ošetruje cieľový bod [0,0].
  * * @param shm Smerník na zdieľanú pamäť.
  */
-void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd) {
+void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd, int socket_fd, int* p_rezim_logovania) {
     // Reset výsledkov v zdieľanej pamäti pod mutexom
     sem_wait(&shm->shm_mutex);
     for(int r = 0; r < shm->riadky; r++) {
@@ -388,17 +389,21 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd) {
 
     // Hlavný cyklus replikácií
     for (int r_id = 0; r_id < shm->total_replikacie; r_id++) {
-        printf("\033[H\033[J");
+        //printf("\033[H\033[J");
         if (shm->stav == SIM_STOP_REQUESTED) {
             write(pipe_write_fd, "SERVER: Zastavujem vypocty na ziadost klienta.", 46);
             return;
         }
-        shm->aktualne_replikacie = r_id;
+        char cmd;
+        // MSG_DONTWAIT zabezpečí, že ak klient nič neposlal, server nezastane a počíta ďalej
+        if (recv(socket_fd, &cmd, 1, MSG_DONTWAIT) > 0) {
+            if (cmd == 'V' || cmd == 'v') {
+                *p_rezim_logovania = !(*p_rezim_logovania);
+                posli_log(pipe_write_fd, "SERVER: Režim globálneho logu bol prepnutý.");
+            }
+        }
 
-        // // V server_logic.c v hlavnom cykle replikácií
-        // if (shm->aktualne_replikacie % 1000 == 0) {
-        //     usleep(1); // Na mikrosekundu uvoľní procesor pre klienta
-        // }
+        shm->aktualne_replikacie = r_id;
 
         for (int riadok = 0; riadok < shm->riadky; riadok++) {
             for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
@@ -425,11 +430,39 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd) {
             }
         }
 
+        // 3. VÝPOČET GLOBÁLNEHO PRIEMERU (pre Log)
+        double suma_hodnot = 0;
+        int pocet_volnych = 0;
+        for (int r = 0; r < shm->riadky; r++) {
+            for (int s = 0; s < shm->stlpece; s++) {
+                if (shm->svet[r][s] != PREKAZKA) {
+                    if (*p_rezim_logovania == 0) { // Režim Percentá
+                        suma_hodnot += ((double)shm->vysledky[r][s].pravdepodobnost_dosiahnutia / (r_id + 1));
+                    } else { // Režim Kroky
+                        suma_hodnot += ((double)shm->vysledky[r][s].avg_kroky / (r_id + 1));
+                    }
+                    pocet_volnych++;
+                }
+            }
+        }
+
+        double globalny_priemer = suma_hodnot / pocet_volnych;
+
         // Po dokončení jednej replikácie: pošli notifikáciu klientovi a krátky log cez pipe
         // Aktualizujeme ukazovateľ aktualne_replikacie pod mutexom pre konzistenciu.
         sem_wait(&shm->shm_mutex);
         shm->aktualne_replikacie = r_id; // index tej prave dokončenej replikacie (0-based)
         sem_post(&shm->shm_mutex);
+
+        char msg[128];
+        if (*p_rezim_logovania == 0) {
+            snprintf(msg, sizeof(msg), "SERVER: Repl. %d/%d - glob. uspesnost : %.1f%%",
+                r_id + 1, shm->total_replikacie, globalny_priemer * 100);
+        } else {
+            snprintf(msg, sizeof(msg), "SERVER: Repl. %d/%d - Glob. priem. krokov: %.1f",
+                     r_id + 1, shm->total_replikacie, globalny_priemer);
+        }
+        posli_log(pipe_write_fd, msg);
 
         // Pošli krátku správu do pipe, aby sa klient mohol informovať aj textovo.
         if (pipe_write_fd >= 0) {
@@ -442,7 +475,7 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd) {
         sem_post(&shm->data_ready);
         // Krátke pozastavenie, aby mal používateľ čas prečítať notifikáciu / update
         //cim menej casu tak rychlejsie pojde program
-        usleep(1000);
+        usleep(100);
     }
 }
 
@@ -453,7 +486,8 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd) {
  * * @param shm Smerník na zdieľanú pamäť.
  */
 //TODO mozno to treba upravit tak aby som si vybral umiestnenie chodza a ukazal cestu do ciela
-void spusti_server(ZdielaneData_t* shm, int pipe_write_fd) {
+void spusti_server(ZdielaneData_t* shm, int pipe_write_fd, int socket_fd) {
+    int rezim_logovanie = 0; //0 = percenta 1 = kroky
     printf("[SERVER] Čakám na inicializáciu menu klientom...\n");
 
     // Aktívne čakanie na štart z menu
@@ -496,7 +530,7 @@ void spusti_server(ZdielaneData_t* shm, int pipe_write_fd) {
     } else {
         // Hromadný výpočet pre všetky políčka
         posli_log(pipe_write_fd, "Server: Bezi vypocet sumarneho modu...");
-        vykonaj_sumarnu_simulaciu(shm, pipe_write_fd);
+        vykonaj_sumarnu_simulaciu(shm, pipe_write_fd, socket_fd, &rezim_logovanie);
     }
 
     // Finálne uloženie dát a upratovanie stavu

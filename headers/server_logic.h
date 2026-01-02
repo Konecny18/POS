@@ -23,7 +23,7 @@
  *
  * @param shm Ukazovateľ na zdieľanú pamäť obsahujúcu konfiguráciu a výsledky.
  */
-void spusti_server(ZdielaneData_t* shm, int pipe_write_fd);
+void spusti_server(ZdielaneData_t* shm, int pipe_write_fd, int socket_fd);
 
 /**
  * @brief Uloží výsledky simulácie a konfiguráciu sveta do súboru.
@@ -94,7 +94,7 @@ bool inicializuj_svet_servera(ZdielaneData_t* shm);
  * Pre každú replikáciu prejde všetky políčka a spustí z neho simuláciu chôdze ak nie je prekážka.
  * @param shm Ukazovateľ na zdieľanú štruktúru.
  */
-void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd);
+void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd, int socket_fd, int* p_rezim_logovania);
 
 /**
  * @brief posiela log spravy cez pipe

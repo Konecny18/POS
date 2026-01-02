@@ -14,6 +14,7 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/shm.h>
+#include <sys/socket.h>
 
 #include "headers/ipc_shm.h"
 #include "headers/server_logic.h"
@@ -73,6 +74,12 @@ int main() {
             break;
         }
 
+        int sv[2]; //socket
+        if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1) {
+            perror("socketpair");
+            return -1;
+        }
+
         // 3. Rozdelenie procesov
         pid_t pid = fork();
 
@@ -83,22 +90,27 @@ int main() {
 
         if (pid == 0) {
             // --- PROCES SERVER (Dieťa) ---
+            close(sv[0]);// server zatvori klientsky socket
             close(pipe_fd[0]); //server necita z pipe
 
+
             // Tu musí bežať SERVER a dostane zápisový koniec pipe
-            spusti_server(shm, pipe_fd[1]);
+            spusti_server(shm, pipe_fd[1], sv[1]);
 
             close(pipe_fd[1]);
+            close(sv[1]);
             //odpojenie bloku od virtualnej adresnej mapy(nepotrebuje pristupovat ku zdielanej pamati)
             shmdt(shm);
             exit(0);
         } else {
             // --- PROCES KLIENT (Rodič) ---
+            close(sv[1]);//klient zatvori serverovy socket
             close(pipe_fd[1]); // Klient nezapisuje do pipe
 
             // OPRAVA: Tu musí bežať KLIENT a dostane čítací koniec pipe
-            spusti_klienta(shm, pipe_fd[0]);
+            spusti_klienta(shm, pipe_fd[0], sv[0]);
 
+            close(sv[0]);
             close(pipe_fd[0]);
 
             // Počkáme na smrť klienta, aby sa nám nepomiešali výpisy v konzole

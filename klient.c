@@ -20,8 +20,11 @@ void* kontrola_pipe(void* arg) {
     char buffer[256];
 
     //read je blokujuce vlakno tu bude spat kym server nieco neposle
-    while (read(args->pipe_read_fd, buffer, sizeof(buffer)) > 0) {
-        printf("\n [NOTIFIKACIA SERVERA]: %s\n", buffer);
+    while (read(args->pipe_read_fd, buffer, sizeof(buffer) - 1) > 0) {
+        snprintf(args->lokalny_log_buffer, 256, "%s", buffer);
+
+        sem_post(&args->shm->data_ready);
+        //printf("\n [NOTIFIKACIA SERVERA]: %s\n", buffer);
     }
     return NULL;
 }
@@ -35,14 +38,18 @@ void* kontrola_pipe(void* arg) {
  *
  * @param shm Ukazovateľ na zdieľanú pamäť obsahujúcu stav simulácie.
  */
-void vykresli_legendu(ZdielaneData_t* shm) {
+void vykresli_legendu(ZdielaneData_t* shm, char* log) {
     // PRIDANÉ: Zobrazenie aktuálnej replikácie podľa bodu 10 zadania
     if (shm->total_replikacie > 1) {
-        int aktual = shm->aktualne_replikacie + 1;
-        if (aktual < 1) aktual = 0; // ochrana, ak este nie je nastavene
-        if (aktual > shm->total_replikacie) aktual = shm->total_replikacie;
+        // int aktual = shm->aktualne_replikacie + 1;
+        // if (aktual < 1) aktual = 0; // ochrana, ak este nie je nastavene
+        // if (aktual > shm->total_replikacie) aktual = shm->total_replikacie;
+        // printf("\n");
+        // printf(" REPLIKÁCIA: %d / %d\n", aktual, shm->total_replikacie);
+        if (log && log[0] != '\n') {
+            printf(" | %s", log);
+        }
         printf("\n");
-        printf(" REPLIKÁCIA: %d / %d\n", aktual, shm->total_replikacie);
     }
 
     printf("\n------------------------------------------------------------\n");
@@ -124,7 +131,12 @@ void* kontrola_klavestnice(void* arg) {
 
         //prepnutie typu sumaru (lokalne)
         if (c == 'v' || c == 'V') {
-            prepni_lokalny_rezim_zobrazenia(c, args->p_rezim);
+            printf("\033[H\033[J");
+            char cmd = 'V';
+            write(args->socket_fd, &cmd, 1);
+
+            *args->p_rezim = !(*args->p_rezim);
+            //prepni_lokalny_rezim_zobrazenia(c, args->p_rezim);
             sem_post(&shm->data_ready);
         }
     }
@@ -197,7 +209,7 @@ void vykresli_tabulku_statistik(ZdielaneData_t* shm, RezimZobrazenia_t rezim) {
  * * @param shm Smerník na zdieľanú pamäť.
  * @param rezim Aktuálne zvolený typ zobrazenia v sumárnom móde (priemer/pravdepodobnosť).
  */
-void obsluz_vykreslovanie(ZdielaneData_t* shm, RezimZobrazenia_t rezim) {
+void obsluz_vykreslovanie(ZdielaneData_t* shm, RezimZobrazenia_t rezim, char* log) {
     // ANSI kód pre návrat kurzora na začiatok a vymazanie obrazovky
     printf("\033[H\033[J");
 
@@ -211,7 +223,7 @@ void obsluz_vykreslovanie(ZdielaneData_t* shm, RezimZobrazenia_t rezim) {
         printf("[KLIENT] Simulujem %d replikacii. Caka sa na vysledky...\n", shm->total_replikacie);
     }
 
-    vykresli_legendu(shm);
+    vykresli_legendu(shm, log);
 }
 
 /**
@@ -221,10 +233,19 @@ void obsluz_vykreslovanie(ZdielaneData_t* shm, RezimZobrazenia_t rezim) {
  * zabezpečí bezpečný prístup k dátam a ich vykreslenie.
  * * @param shm Smerník na zdieľanú pamäť.
  */
-void spusti_klienta(ZdielaneData_t* shm, int pipe_read_fd) {
+void spusti_klienta(ZdielaneData_t* shm, int pipe_read_fd, int socket_fd) {
     RezimZobrazenia_t aktualny_rezim = ZOBRAZ_PRIEMER_KROKOV;
+    char log_buffer[256] = "";
+
     pthread_t thread_id, pipe_thread_id;
-    VlaknoArgs_t args = { .shm = shm, .p_rezim = &aktualny_rezim, .pipe_read_fd = pipe_read_fd };
+    //inicializacia args
+    VlaknoArgs_t args = {
+        .shm = shm,
+        .p_rezim = &aktualny_rezim,
+        .pipe_read_fd = pipe_read_fd,
+        .socket_fd = socket_fd,
+        .lokalny_log_buffer = log_buffer
+    };
 
 
     printf("[KLIENT] Spusteny, cakam na data...\n");
@@ -254,7 +275,7 @@ void spusti_klienta(ZdielaneData_t* shm, int pipe_read_fd) {
         sem_wait(&shm->shm_mutex);
 
         // Vykreslenie aktuálneho stavu
-        obsluz_vykreslovanie(shm, aktualny_rezim);
+        obsluz_vykreslovanie(shm, aktualny_rezim, log_buffer);
 
         int stav_po_vykresleni = shm->stav;
 

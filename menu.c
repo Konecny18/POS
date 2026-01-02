@@ -105,7 +105,10 @@ void nacitaj_pravdepodobnosti(ZdielaneData_t* shm) {
  */
 void zobraz_pociatocne_menu(ZdielaneData_t* shm) {
     printf("=== HLAVNE MENU ===\n");
-    printf("pokial chces ukoncit aplikaciu hocikedy tak stlac q a enter\n");
+    printf("Pocas behu aplikacie mozes pouzit nasledujuce prikazy:\n");
+    printf("v + enter - Zmena priemeru krokov/pravdepodobnosti\n");
+    printf("q + enter - Ukoncenie simulacie\n");
+    printf("\n");
     printf("0 - Ukoncenie aplikacie\n");
     printf("1 - Nova nahodna simulacia\n");
     printf("2 - Opatovne spustenie (nacitat zo suboru)\n");

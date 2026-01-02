@@ -41,6 +41,8 @@ typedef struct {
     ZdielaneData_t* shm;
     RezimZobrazenia_t* p_rezim;
     int pipe_read_fd;
+    int socket_fd;
+    char* lokalny_log_buffer;
 } VlaknoArgs_t;
 
 /**
@@ -49,7 +51,7 @@ typedef struct {
  * Spúšťa vlákno na čítanie klávesnice, čaká na semafór `data_ready` a volá
  * vykresľovacie funkcie podľa aktuálneho módu v `shm`.
  */
-void spusti_klienta(ZdielaneData_t* shm, int pipe_read_fd);
+void spusti_klienta(ZdielaneData_t* shm, int pipe_read_fd, int socket_fd);
 
 /**
  * @brief Vláknová funkcia, ktorá beží na pozadí a spracúva stlačenia kláves.
@@ -77,7 +79,7 @@ void vykresli_tabulku_statistik(ZdielaneData_t* shm, RezimZobrazenia_t rezim);
  *
  * Zobrazí nápovedu pre používateľa (klávesové skratky) a aktuálny stav.
  */
-void vykresli_legendu(ZdielaneData_t* shm);
+void vykresli_legendu(ZdielaneData_t* shm, char* log);
 
 /**
  * @brief Prepne lokálny režim zobrazenia (priemer <-> pravdepodobnosť).
@@ -94,6 +96,6 @@ void prepni_lokalny_rezim_zobrazenia(int klavesa, RezimZobrazenia_t* p_rezim);
  * Volá `vykresli_mriezku_s_chodcom` v interaktívnom móde alebo
  * `vykresli_tabulku_statistik` v sumárnom móde a nakoniec vypíše legendu.
  */
-void obsluz_vykreslovanie(ZdielaneData_t* shm, RezimZobrazenia_t rezim);
+void obsluz_vykreslovanie(ZdielaneData_t* shm, RezimZobrazenia_t rezim, char* log);
 
 #endif // SEMESTRALKA_CLIENT_LOGIC_H
