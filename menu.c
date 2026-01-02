@@ -107,6 +107,7 @@ void zobraz_pociatocne_menu(ZdielaneData_t* shm) {
     printf("=== HLAVNE MENU ===\n");
     printf("Pocas behu aplikacie mozes pouzit nasledujuce prikazy:\n");
     printf("v + enter - Zmena priemeru krokov/pravdepodobnosti\n");
+    printf("m + enter - Zmena sumarneho rezimu na interaktivny\n");
     printf("q + enter - Ukoncenie simulacie\n");
     printf("\n");
     printf("0 - Ukoncenie aplikacie\n");
