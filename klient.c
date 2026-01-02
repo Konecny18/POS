@@ -186,14 +186,14 @@ void vykresli_tabulku_statistik(ZdielaneData_t* shm, RezimZobrazenia_t rezim) {
         for (int riadok = 0; riadok < shm->riadky; riadok++) {
             for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
                 if (shm->svet[riadok][stlpec] == PREKAZKA) {
-                    printf(" ### ");
+                    printf("| ### |");
                 } else {
                     if (rezim == ZOBRAZ_PRIEMER_KROKOV) {
                         double priemer = (double)shm->vysledky[riadok][stlpec].avg_kroky / shm->total_replikacie;
-                        printf("%5.2f ", priemer);
+                        printf("| %5.2f |", priemer);
                     } else {
                         double uspesnost = ((double)shm->vysledky[riadok][stlpec].pravdepodobnost_dosiahnutia / shm->total_replikacie * 100);
-                        printf("%3.0f%%  ", uspesnost);
+                        printf("| %3.0f%%  |", uspesnost);
                     }
                 }
             }
