@@ -20,11 +20,14 @@ void* kontrola_pipe(void* arg) {
     char buffer[256];
 
     //read je blokujuce vlakno tu bude spat kym server nieco neposle
-    while (read(args->pipe_read_fd, buffer, sizeof(buffer) - 1) > 0) {
+    ssize_t n;
+    while ((n = read(args->pipe_read_fd, buffer, sizeof(buffer) - 1)) > 0) {
+        buffer[n] = '\0';
+        // ulozime do lokalneho log buffra, neprebudzujeme vykreslovanie na zaklade textovych logov
         snprintf(args->lokalny_log_buffer, 256, "%s", buffer);
 
-        sem_post(&args->shm->data_ready);
-        //printf("\n [NOTIFIKACIA SERVERA]: %s\n", buffer);
+        // predosle chovanie: sem_post(&args->shm->data_ready);
+        // Uprava: log spravy nebudu automaticky prebudzovat renderer; renderer bude prebudzovany z praveho data_ready signalu od servera
     }
     return NULL;
 }
@@ -76,11 +79,11 @@ void vykresli_legendu(ZdielaneData_t* shm, char* log) {
  * @param p_rezim Ukazovateľ na premennú obsahujúcu aktuálny režim zobrazenia;
  *                 funkcia prepne hodnotu na druhý režim.
  */
-void prepni_lokalny_rezim_zobrazenia(int klavesa, RezimZobrazenia_t* p_rezim) {
-    if (klavesa == 'v' || klavesa == 'V') {
-        *p_rezim = (*p_rezim == ZOBRAZ_PRIEMER_KROKOV) ? ZOBRAZ_PRAVDEPODOBNOST_K : ZOBRAZ_PRIEMER_KROKOV;
-    }
-}
+// void prepni_lokalny_rezim_zobrazenia(int klavesa, RezimZobrazenia_t* p_rezim) {
+//     if (klavesa == 'v' || klavesa == 'V') {
+//         *p_rezim = (*p_rezim == ZOBRAZ_PRIEMER_KROKOV) ? ZOBRAZ_PRAVDEPODOBNOST_K : ZOBRAZ_PRIEMER_KROKOV;
+//     }
+// }
 
 /**
  * @brief Vlákno pre asynchrónne snímanie vstupu z klávesnice.
@@ -263,6 +266,22 @@ void spusti_klienta(ZdielaneData_t* shm, int pipe_read_fd, int socket_fd) {
     while (/*shm->stav != SIM_STOP_REQUESTED && shm->stav != SIM_EXIT*/1) {
         // Čakanie na notifikáciu od servera, že sú dostupné nové dáta
         sem_wait(&shm->data_ready);
+
+        // DEBUG: log SHM state to stderr to diagnose partial rendering
+        // fprintf(stderr, "[CLIENT-DEBUG] woke: stav=%d mod=%d riadky=%d stlpece=%d aktualne_replikacie=%d total_replikacie=%d\n",
+        //         shm->stav, shm->mod, shm->riadky, shm->stlpece, shm->aktualne_replikacie, shm->total_replikacie);
+
+        // If server hasn't moved past INIT yet, ignore this wake-up (it's likely a log or stale signal)
+        // if (shm->stav == SIM_INIT) {
+        //     fprintf(stderr, "[CLIENT-DEBUG] Ignoring wake while in SIM_INIT\n");
+        //     continue;
+        // }
+        //
+        // // Guard against invalid dimensions (possible early/uninitialized state) - skip if invalid
+        // if (shm->riadky < 1 || shm->riadky > MAX_ROWS || shm->stlpece < 1 || shm->stlpece > MAX_COLS) {
+        //     fprintf(stderr, "[CLIENT-DEBUG] Invalid dimensions riadky=%d stlpece=%d - ignoring\n", shm->riadky, shm->stlpece);
+        //     continue;
+        // }
 
         //kvoli tomu ze vlakno mi tu vyselo ked som zadal vela udajov a predcasne som ukoncil simulaciu tak som bol zaseknuty
         if (shm->stav == SIM_STOP_REQUESTED || shm->stav == SIM_EXIT) {

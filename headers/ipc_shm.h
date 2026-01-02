@@ -81,11 +81,17 @@ ZdielaneData_t* shm_create_and_attach(key_t key); // Vracia pointer, pretoze SHM
  * @brief Odpojí a odstráni segment zdieľanej pamäte (ak existuje).
  *
  * Odpojí lokálne pripojenie a pokúsi sa označiť segment pre odstránenie.
+ *
+ * @param shm_ptr Ukazovateľ na pripojenú zdieľanú pamäť (môže byť NULL).
+ * @param key Kľúč segmentu SHM (používa sa pri označení pre odstránenie).
  */
 void shm_detach_and_destroy(ZdielaneData_t* shm_ptr, key_t key);
 
 /**
  * @brief Zničí semafory, ktoré boli inicializované v `shm_create_and_attach`.
+ *
+ * Odstraňuje/alokácie semaforov asociované s danou štruktúrou. Neoslobodzuje SHM.
+ * @param shm_ptr Ukazovateľ na zdieľanú pamäť, z ktorej sa semafory zničia.
  */
 void shm_cleanup_semaphores(ZdielaneData_t* shm_ptr);
 
@@ -95,6 +101,8 @@ void shm_cleanup_semaphores(ZdielaneData_t* shm_ptr);
  * Vyčistí pole `vysledky`, nastaví `aktualne_replikacie` a ďalšie per-run príznaky na
  * predvolené hodnoty a vyprázdni semafor `data_ready` (ak obsahuje zostávajúce signály),
  * aby nový klient nezačal okamžite spracovávať staré notifikácie.
+ *
+ * @param shm Ukazovateľ na zdieľanú pamäť, ktorú treba resetovať.
  */
 void shm_reset_results(ZdielaneData_t* shm);
 

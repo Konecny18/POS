@@ -22,6 +22,8 @@
  * @brief Spustí hlavnú riadiacu slučku servera (čakanie na klienta, spustenie simulácie).
  *
  * @param shm Ukazovateľ na zdieľanú pamäť obsahujúcu konfiguráciu a výsledky.
+ * @param pipe_write_fd File descriptor pre zápis do pipe smerom ku klientovi (log/notify).
+ * @param socket_fd File descriptor TCP/Unix socketu použitý pre sieťovú komunikáciu (ak je používaný), alebo -1.
  */
 void spusti_server(ZdielaneData_t* shm, int pipe_write_fd, int socket_fd);
 
@@ -92,15 +94,21 @@ bool inicializuj_svet_servera(ZdielaneData_t* shm);
  * @brief Vykoná kompletnú sumárnu simuláciu pre všetky políčka sveta.
  *
  * Pre každú replikáciu prejde všetky políčka a spustí z neho simuláciu chôdze ak nie je prekážka.
+ *
  * @param shm Ukazovateľ na zdieľanú štruktúru.
+ * @param pipe_write_fd File descriptor pre zápis log/štavových správ klientovi cez pipe.
+ * @param socket_fd File descriptor socketu pre prípadné odosielanie výsledkov cez sieť (alebo -1 ak nepoužité).
+ * @param p_rezim_logovania Ukazovateľ na int, ktorý určuje režim logovania (0 = žiadny, 1 = stručný, 2 = detailný); môže byť NULL.
  */
 void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd, int socket_fd, int* p_rezim_logovania);
 
 /**
- * @brief posiela log spravy cez pipe
+ * @brief Posiela textové log správy cez pipe na klienta.
  *
- * Implementovany v server.c; declarovane tu ak by to chcel aj niekdo iny pouzit
+ * Použité na zasielanie krátkych notifikácií alebo priebežných informácií server -> klient.
+ * @param pipe_write_fd File descriptor pipe pre zápis.
+ * @param sprava C-string správa (null-terminated), bezpečné pre lokálny buffer.
  */
 void posli_log(int pipe_write_fd, const char* sprava);
 
-#endif
+#endif // SEMESTRALKA_SERVER_LOGIC_H

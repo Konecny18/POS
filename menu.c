@@ -145,6 +145,8 @@ void zobraz_pociatocne_menu(ZdielaneData_t* shm) {
 
 
     // ak sme tu, nastavujeme simulacny stav na INIT a pokracujeme
+    // Reset results to avoid leftover partial tables being displayed by client
+    shm_reset_results(shm);
     shm->stav = SIM_INIT;
     printf("\n[MENU] Nastavenia pripravene, simulacia startuje...\n");
 }

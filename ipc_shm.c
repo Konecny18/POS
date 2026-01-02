@@ -124,26 +124,31 @@ void shm_reset_results(ZdielaneData_t* shm) {
     // Clear result arrays under mutex protection if semaphore is initialized
     // Try to acquire mutex; if sem_wait fails we still attempt to clear without it
     if (sem_wait(&shm->shm_mutex) == 0) {
-        for (int r = 0; r < shm->riadky; r++) {
-            for (int s = 0; s < shm->stlpece; s++) {
+        for (int r = 0; r < MAX_ROWS; r++) {
+            for (int s = 0; s < MAX_COLS; s++) {
                 shm->vysledky[r][s].avg_kroky = 0.0;
                 shm->vysledky[r][s].pravdepodobnost_dosiahnutia = 0.0;
                 shm->vysledky[r][s].navstivene = false;
             }
         }
         shm->aktualne_replikacie = 0;
+        // reset current walker position to a safe default (0,0)
+        shm->aktualna_pozicia_chodca.riadok = 0;
+        shm->aktualna_pozicia_chodca.stlpec = 0;
         // leave other persistent fields (nazov_suboru, pravdepodobnost, svet) intact
         sem_post(&shm->shm_mutex);
     } else {
-        // fallback: zero memory region conservatively (only up to configured dimensions)
-        for (int r = 0; r < shm->riadky; r++) {
-            for (int s = 0; s < shm->stlpece; s++) {
+        // fallback: zero memory region conservatively for full fixed grid
+        for (int r = 0; r < MAX_ROWS; r++) {
+            for (int s = 0; s < MAX_COLS; s++) {
                 shm->vysledky[r][s].avg_kroky = 0.0;
                 shm->vysledky[r][s].pravdepodobnost_dosiahnutia = 0.0;
                 shm->vysledky[r][s].navstivene = false;
             }
         }
         shm->aktualne_replikacie = 0;
+        shm->aktualna_pozicia_chodca.riadok = 0;
+        shm->aktualna_pozicia_chodca.stlpec = 0;
     }
 
     // Drain any leftover data_ready signals so client threads don't immediately wake
