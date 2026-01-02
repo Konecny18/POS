@@ -51,15 +51,13 @@ void vykresli_legendu(ZdielaneData_t* shm, char* log) {
         }
         printf("\n");
     }
-
-    printf("\n------------------------------------------------------------\n");
-    printf(" OVLÁDANIE:\n");
-    printf(" [V] - Prepni zobrazenie (Priemer / Pravdepodobnosť)\n");
-    printf(" [M] - Prepni mód (Interaktívny / Sumárny)\n");
-    printf(" [Q] - Ukončiť simuláciu a návrat do menu\n");
-    printf("------------------------------------------------------------\n");
-
     if (shm->stav == SIM_FINISHED) {
+        printf("\n------------------------------------------------------------\n");
+        printf(" OVLÁDANIE:\n");
+        printf(" [V] - Prepni zobrazenie (Priemer / Pravdepodobnosť)\n");
+        printf(" [M] - Prepni mód (Interaktívny / Sumárny)\n");
+        printf(" [Q] - Ukončiť simuláciu a návrat do menu\n");
+        printf("------------------------------------------------------------\n");
         printf(" STAV: Simulácia úspešne dokončená. Prezeráte si výsledky.\n");
         printf("[KLIENT] zadaj prikaz: \n");
     } else if (shm->stav == SIM_RUNNING) {
