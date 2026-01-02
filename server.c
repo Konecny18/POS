@@ -446,7 +446,13 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd, int socke
             }
         }
 
-        double globalny_priemer = suma_hodnot / pocet_volnych;
+        //vyhnut sa deleniu 0
+        double globalny_priemer = 0.0;
+        if (pocet_volnych > 0) {
+            globalny_priemer = suma_hodnot / pocet_volnych;
+        } else {
+            globalny_priemer = 0.0; // no free cells -> zero average
+        }
 
         // Po dokončení jednej replikácie: pošli notifikáciu klientovi a krátky log cez pipe
         // Aktualizujeme ukazovateľ aktualne_replikacie pod mutexom pre konzistenciu.
@@ -456,9 +462,14 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd, int socke
 
         char msg[128];
         if (*p_rezim_logovania == 0) {
+            // percentový režim -> zabezpečíme, že výsledok bude v rozmedzí 0..100
+            double percent = globalny_priemer * 100.0;
+            if (percent < 0.0) percent = 0.0;
+            if (percent > 100.0) percent = 100.0;
             snprintf(msg, sizeof(msg), "SERVER: Repl. %d/%d - glob. uspesnost : %.1f%%",
-                r_id + 1, shm->total_replikacie, globalny_priemer * 100);
+                r_id + 1, shm->total_replikacie, percent);
         } else {
+            // režim kroky - zobrazujeme priemerný počet krokov (bez percent)
             snprintf(msg, sizeof(msg), "SERVER: Repl. %d/%d - Glob. priem. krokov: %.1f",
                      r_id + 1, shm->total_replikacie, globalny_priemer);
         }
