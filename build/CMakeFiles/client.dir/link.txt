@@ -1,0 +1,1 @@
+/usr/bin/cc CMakeFiles/client.dir/main.c.o CMakeFiles/client.dir/server.c.o CMakeFiles/client.dir/klient.c.o CMakeFiles/client.dir/ipc_shm.c.o CMakeFiles/client.dir/menu.c.o -o client  -lrt 

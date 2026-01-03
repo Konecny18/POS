@@ -1,0 +1,4 @@
+/home/damko/Semestralka_IPC_Linux/build/CMakeFiles/server.dir
+/home/damko/Semestralka_IPC_Linux/build/CMakeFiles/client.dir
+/home/damko/Semestralka_IPC_Linux/build/CMakeFiles/edit_cache.dir
+/home/damko/Semestralka_IPC_Linux/build/CMakeFiles/rebuild_cache.dir
