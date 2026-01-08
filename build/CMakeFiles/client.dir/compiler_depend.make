@@ -326,6 +326,8 @@ CMakeFiles/client.dir/logika_aplikacie/menu.c.o: /home/damko/Semestralka_IPC_Lin
   /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
   /usr/include/x86_64-linux-gnu/bits/select.h \
   /usr/include/x86_64-linux-gnu/bits/semaphore.h \
+  /usr/include/x86_64-linux-gnu/bits/shm.h \
+  /usr/include/x86_64-linux-gnu/bits/shmlba.h \
   /usr/include/x86_64-linux-gnu/bits/stdint-intn.h \
   /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
   /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
@@ -348,6 +350,8 @@ CMakeFiles/client.dir/logika_aplikacie/menu.c.o: /home/damko/Semestralka_IPC_Lin
   /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h \
+  /usr/include/x86_64-linux-gnu/bits/types/struct_shmid64_ds.h \
+  /usr/include/x86_64-linux-gnu/bits/types/struct_shmid_ds.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h \
   /usr/include/x86_64-linux-gnu/bits/types/time_t.h \
@@ -362,6 +366,7 @@ CMakeFiles/client.dir/logika_aplikacie/menu.c.o: /home/damko/Semestralka_IPC_Lin
   /usr/include/x86_64-linux-gnu/sys/cdefs.h \
   /usr/include/x86_64-linux-gnu/sys/ipc.h \
   /usr/include/x86_64-linux-gnu/sys/select.h \
+  /usr/include/x86_64-linux-gnu/sys/shm.h \
   /usr/include/x86_64-linux-gnu/sys/types.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \

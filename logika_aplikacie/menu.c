@@ -182,8 +182,11 @@ int zobraz_pociatocne_menu(ZdielaneData_t* shm) {
             // Kontrola inicializácie (musí byť viac ako 0 riadkov a stĺpcov)
             //Az po zadani riadkov a stlpcov sa bude moct pripojit cez druhy terminal druhy clovek
             if (existujuce_shm->riadky <= 0 || existujuce_shm->stlpece <= 0) {
-                printf("\n[CHYBA] Nie je spustená žiadna simulácia.\n");
-                printf("Dáta v zdieľanej pamäti nie sú inicializované.\n");
+                printf("\n");
+                printf("\n------------------- [CHYBA] Nie je spustená žiadna simulácia.------------------- \n");
+                printf("------------------- Dáta v zdieľanej pamäti nie sú inicializované.------------------- \n");
+                printf("------------------Simulacia sa spusti az po zadani riadkov a stlpcov.------------------- \n");
+                printf("\n");
 
                 // DÔLEŽITÉ: Tu voláme iba shmdt cez tvoju funkciu (bez RMID!),
                 // aby sme neodstránili pamäť pre ostatných
