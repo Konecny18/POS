@@ -16,10 +16,10 @@
 #include <sys/shm.h>
 #include <sys/socket.h>
 
-#include "headers/ipc_shm.h"
-#include "headers/server_logic.h"
-#include "headers/client_logic.h"
-#include "headers/client_menu.h"
+#include "../headers/ipc_shm.h"
+#include "../headers/server_logic.h"
+#include "../headers/client_logic.h"
+#include "../headers/client_menu.h"
 
 /**
  * @brief Hlavná funkcia aplikácie.

@@ -11,8 +11,8 @@
 #include <semaphore.h>
 #include <errno.h>
 
-#include "headers/ipc_shm.h"
-#include "headers/common.h"
+#include "../headers/ipc_shm.h"
+#include "../headers/common.h"
 
 #define SHM_KEY 1234 //nahodny kluc pre identifikaciu pamate
 

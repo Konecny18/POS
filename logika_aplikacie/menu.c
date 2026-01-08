@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "headers/client_menu.h"
+#include "../headers/client_menu.h"
 
 /**
  * @brief Bezpečne načíta celé číslo z konzoly v zadanom rozsahu.

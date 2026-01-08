@@ -6,7 +6,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-#include "headers/ipc_shm.h"
+#include "../headers/ipc_shm.h"
 
 /**
  * @brief Pošle krátku textovú správu klientovi cez pipe.

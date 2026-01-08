@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include "headers/client_logic.h"
+#include "../headers/client_logic.h"
 
 /**
  * @brief Vlákno, ktoré číta správy zo serveru cez pipe a vypisuje notifikácie.
