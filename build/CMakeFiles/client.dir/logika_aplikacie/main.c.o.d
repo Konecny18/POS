@@ -1,4 +1,5 @@
-CMakeFiles/server.dir/main.c.o: /home/damko/Semestralka_IPC_Linux/main.c \
+CMakeFiles/client.dir/logika_aplikacie/main.c.o: \
+ /home/damko/Semestralka_IPC_Linux/logika_aplikacie/main.c \
  /usr/include/stdc-predef.h /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -104,11 +105,11 @@ CMakeFiles/server.dir/main.c.o: /home/damko/Semestralka_IPC_Linux/main.c \
  /usr/include/x86_64-linux-gnu/asm/sockios.h \
  /usr/include/asm-generic/sockios.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
- /home/damko/Semestralka_IPC_Linux/headers/ipc_shm.h \
+ /home/damko/Semestralka_IPC_Linux/logika_aplikacie/../headers/ipc_shm.h \
  /usr/include/semaphore.h /usr/include/x86_64-linux-gnu/bits/semaphore.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
- /home/damko/Semestralka_IPC_Linux/headers/common.h \
- /home/damko/Semestralka_IPC_Linux/headers/server_logic.h \
- /home/damko/Semestralka_IPC_Linux/headers/ipc_shm.h \
- /home/damko/Semestralka_IPC_Linux/headers/client_logic.h \
- /home/damko/Semestralka_IPC_Linux/headers/client_menu.h
+ /home/damko/Semestralka_IPC_Linux/logika_aplikacie/../headers/common.h \
+ /home/damko/Semestralka_IPC_Linux/logika_aplikacie/../headers/server_logic.h \
+ /home/damko/Semestralka_IPC_Linux/logika_aplikacie/../headers/ipc_shm.h \
+ /home/damko/Semestralka_IPC_Linux/logika_aplikacie/../headers/client_logic.h \
+ /home/damko/Semestralka_IPC_Linux/logika_aplikacie/../headers/client_menu.h

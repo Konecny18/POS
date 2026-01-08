@@ -1,4 +1,5 @@
-CMakeFiles/server.dir/menu.c.o: /home/damko/Semestralka_IPC_Linux/menu.c \
+CMakeFiles/server.dir/logika_aplikacie/ipc_shm.c.o: \
+ /home/damko/Semestralka_IPC_Linux/logika_aplikacie/ipc_shm.c \
  /usr/include/stdc-predef.h /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -50,13 +51,24 @@ CMakeFiles/server.dir/menu.c.o: /home/damko/Semestralka_IPC_Linux/menu.c \
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h /usr/include/string.h \
  /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
- /usr/include/strings.h \
- /home/damko/Semestralka_IPC_Linux/headers/client_menu.h \
- /home/damko/Semestralka_IPC_Linux/headers/ipc_shm.h \
- /usr/include/semaphore.h /usr/include/x86_64-linux-gnu/bits/semaphore.h \
- /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
- /usr/include/x86_64-linux-gnu/sys/ipc.h \
+ /usr/include/strings.h /usr/include/x86_64-linux-gnu/sys/ipc.h \
  /usr/include/x86_64-linux-gnu/bits/ipctypes.h \
  /usr/include/x86_64-linux-gnu/bits/ipc.h \
  /usr/include/x86_64-linux-gnu/bits/ipc-perm.h \
- /home/damko/Semestralka_IPC_Linux/headers/common.h
+ /usr/include/x86_64-linux-gnu/sys/shm.h \
+ /usr/include/x86_64-linux-gnu/bits/shm.h \
+ /usr/include/x86_64-linux-gnu/bits/shmlba.h \
+ /usr/include/x86_64-linux-gnu/bits/types/struct_shmid_ds.h \
+ /usr/include/x86_64-linux-gnu/bits/types/struct_shmid64_ds.h \
+ /usr/include/x86_64-linux-gnu/sys/sem.h \
+ /usr/include/x86_64-linux-gnu/bits/sem.h \
+ /usr/include/x86_64-linux-gnu/bits/types/struct_semid_ds.h \
+ /usr/include/x86_64-linux-gnu/bits/types/struct_semid64_ds.h \
+ /usr/include/semaphore.h /usr/include/x86_64-linux-gnu/bits/semaphore.h \
+ /usr/include/errno.h /usr/include/x86_64-linux-gnu/bits/errno.h \
+ /usr/include/linux/errno.h /usr/include/x86_64-linux-gnu/asm/errno.h \
+ /usr/include/asm-generic/errno.h /usr/include/asm-generic/errno-base.h \
+ /home/damko/Semestralka_IPC_Linux/logika_aplikacie/../headers/ipc_shm.h \
+ /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
+ /home/damko/Semestralka_IPC_Linux/logika_aplikacie/../headers/common.h \
+ /home/damko/Semestralka_IPC_Linux/logika_aplikacie/../headers/common.h

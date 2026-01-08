@@ -69,92 +69,92 @@ include CMakeFiles/client.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/client.dir/flags.make
 
-CMakeFiles/client.dir/main.c.o: CMakeFiles/client.dir/flags.make
-CMakeFiles/client.dir/main.c.o: /home/damko/Semestralka_IPC_Linux/main.c
-CMakeFiles/client.dir/main.c.o: CMakeFiles/client.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/damko/Semestralka_IPC_Linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/client.dir/main.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/client.dir/main.c.o -MF CMakeFiles/client.dir/main.c.o.d -o CMakeFiles/client.dir/main.c.o -c /home/damko/Semestralka_IPC_Linux/main.c
+CMakeFiles/client.dir/logika_aplikacie/main.c.o: CMakeFiles/client.dir/flags.make
+CMakeFiles/client.dir/logika_aplikacie/main.c.o: /home/damko/Semestralka_IPC_Linux/logika_aplikacie/main.c
+CMakeFiles/client.dir/logika_aplikacie/main.c.o: CMakeFiles/client.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/damko/Semestralka_IPC_Linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/client.dir/logika_aplikacie/main.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/client.dir/logika_aplikacie/main.c.o -MF CMakeFiles/client.dir/logika_aplikacie/main.c.o.d -o CMakeFiles/client.dir/logika_aplikacie/main.c.o -c /home/damko/Semestralka_IPC_Linux/logika_aplikacie/main.c
 
-CMakeFiles/client.dir/main.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/client.dir/main.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/damko/Semestralka_IPC_Linux/main.c > CMakeFiles/client.dir/main.c.i
+CMakeFiles/client.dir/logika_aplikacie/main.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/client.dir/logika_aplikacie/main.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/damko/Semestralka_IPC_Linux/logika_aplikacie/main.c > CMakeFiles/client.dir/logika_aplikacie/main.c.i
 
-CMakeFiles/client.dir/main.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/client.dir/main.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/damko/Semestralka_IPC_Linux/main.c -o CMakeFiles/client.dir/main.c.s
+CMakeFiles/client.dir/logika_aplikacie/main.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/client.dir/logika_aplikacie/main.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/damko/Semestralka_IPC_Linux/logika_aplikacie/main.c -o CMakeFiles/client.dir/logika_aplikacie/main.c.s
 
-CMakeFiles/client.dir/server.c.o: CMakeFiles/client.dir/flags.make
-CMakeFiles/client.dir/server.c.o: /home/damko/Semestralka_IPC_Linux/server.c
-CMakeFiles/client.dir/server.c.o: CMakeFiles/client.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/damko/Semestralka_IPC_Linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/client.dir/server.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/client.dir/server.c.o -MF CMakeFiles/client.dir/server.c.o.d -o CMakeFiles/client.dir/server.c.o -c /home/damko/Semestralka_IPC_Linux/server.c
+CMakeFiles/client.dir/logika_aplikacie/server.c.o: CMakeFiles/client.dir/flags.make
+CMakeFiles/client.dir/logika_aplikacie/server.c.o: /home/damko/Semestralka_IPC_Linux/logika_aplikacie/server.c
+CMakeFiles/client.dir/logika_aplikacie/server.c.o: CMakeFiles/client.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/damko/Semestralka_IPC_Linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/client.dir/logika_aplikacie/server.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/client.dir/logika_aplikacie/server.c.o -MF CMakeFiles/client.dir/logika_aplikacie/server.c.o.d -o CMakeFiles/client.dir/logika_aplikacie/server.c.o -c /home/damko/Semestralka_IPC_Linux/logika_aplikacie/server.c
 
-CMakeFiles/client.dir/server.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/client.dir/server.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/damko/Semestralka_IPC_Linux/server.c > CMakeFiles/client.dir/server.c.i
+CMakeFiles/client.dir/logika_aplikacie/server.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/client.dir/logika_aplikacie/server.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/damko/Semestralka_IPC_Linux/logika_aplikacie/server.c > CMakeFiles/client.dir/logika_aplikacie/server.c.i
 
-CMakeFiles/client.dir/server.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/client.dir/server.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/damko/Semestralka_IPC_Linux/server.c -o CMakeFiles/client.dir/server.c.s
+CMakeFiles/client.dir/logika_aplikacie/server.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/client.dir/logika_aplikacie/server.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/damko/Semestralka_IPC_Linux/logika_aplikacie/server.c -o CMakeFiles/client.dir/logika_aplikacie/server.c.s
 
-CMakeFiles/client.dir/klient.c.o: CMakeFiles/client.dir/flags.make
-CMakeFiles/client.dir/klient.c.o: /home/damko/Semestralka_IPC_Linux/klient.c
-CMakeFiles/client.dir/klient.c.o: CMakeFiles/client.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/damko/Semestralka_IPC_Linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/client.dir/klient.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/client.dir/klient.c.o -MF CMakeFiles/client.dir/klient.c.o.d -o CMakeFiles/client.dir/klient.c.o -c /home/damko/Semestralka_IPC_Linux/klient.c
+CMakeFiles/client.dir/logika_aplikacie/klient.c.o: CMakeFiles/client.dir/flags.make
+CMakeFiles/client.dir/logika_aplikacie/klient.c.o: /home/damko/Semestralka_IPC_Linux/logika_aplikacie/klient.c
+CMakeFiles/client.dir/logika_aplikacie/klient.c.o: CMakeFiles/client.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/damko/Semestralka_IPC_Linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/client.dir/logika_aplikacie/klient.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/client.dir/logika_aplikacie/klient.c.o -MF CMakeFiles/client.dir/logika_aplikacie/klient.c.o.d -o CMakeFiles/client.dir/logika_aplikacie/klient.c.o -c /home/damko/Semestralka_IPC_Linux/logika_aplikacie/klient.c
 
-CMakeFiles/client.dir/klient.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/client.dir/klient.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/damko/Semestralka_IPC_Linux/klient.c > CMakeFiles/client.dir/klient.c.i
+CMakeFiles/client.dir/logika_aplikacie/klient.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/client.dir/logika_aplikacie/klient.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/damko/Semestralka_IPC_Linux/logika_aplikacie/klient.c > CMakeFiles/client.dir/logika_aplikacie/klient.c.i
 
-CMakeFiles/client.dir/klient.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/client.dir/klient.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/damko/Semestralka_IPC_Linux/klient.c -o CMakeFiles/client.dir/klient.c.s
+CMakeFiles/client.dir/logika_aplikacie/klient.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/client.dir/logika_aplikacie/klient.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/damko/Semestralka_IPC_Linux/logika_aplikacie/klient.c -o CMakeFiles/client.dir/logika_aplikacie/klient.c.s
 
-CMakeFiles/client.dir/ipc_shm.c.o: CMakeFiles/client.dir/flags.make
-CMakeFiles/client.dir/ipc_shm.c.o: /home/damko/Semestralka_IPC_Linux/ipc_shm.c
-CMakeFiles/client.dir/ipc_shm.c.o: CMakeFiles/client.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/damko/Semestralka_IPC_Linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/client.dir/ipc_shm.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/client.dir/ipc_shm.c.o -MF CMakeFiles/client.dir/ipc_shm.c.o.d -o CMakeFiles/client.dir/ipc_shm.c.o -c /home/damko/Semestralka_IPC_Linux/ipc_shm.c
+CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.o: CMakeFiles/client.dir/flags.make
+CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.o: /home/damko/Semestralka_IPC_Linux/logika_aplikacie/ipc_shm.c
+CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.o: CMakeFiles/client.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/damko/Semestralka_IPC_Linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.o -MF CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.o.d -o CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.o -c /home/damko/Semestralka_IPC_Linux/logika_aplikacie/ipc_shm.c
 
-CMakeFiles/client.dir/ipc_shm.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/client.dir/ipc_shm.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/damko/Semestralka_IPC_Linux/ipc_shm.c > CMakeFiles/client.dir/ipc_shm.c.i
+CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/damko/Semestralka_IPC_Linux/logika_aplikacie/ipc_shm.c > CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.i
 
-CMakeFiles/client.dir/ipc_shm.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/client.dir/ipc_shm.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/damko/Semestralka_IPC_Linux/ipc_shm.c -o CMakeFiles/client.dir/ipc_shm.c.s
+CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/damko/Semestralka_IPC_Linux/logika_aplikacie/ipc_shm.c -o CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.s
 
-CMakeFiles/client.dir/menu.c.o: CMakeFiles/client.dir/flags.make
-CMakeFiles/client.dir/menu.c.o: /home/damko/Semestralka_IPC_Linux/menu.c
-CMakeFiles/client.dir/menu.c.o: CMakeFiles/client.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/damko/Semestralka_IPC_Linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/client.dir/menu.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/client.dir/menu.c.o -MF CMakeFiles/client.dir/menu.c.o.d -o CMakeFiles/client.dir/menu.c.o -c /home/damko/Semestralka_IPC_Linux/menu.c
+CMakeFiles/client.dir/logika_aplikacie/menu.c.o: CMakeFiles/client.dir/flags.make
+CMakeFiles/client.dir/logika_aplikacie/menu.c.o: /home/damko/Semestralka_IPC_Linux/logika_aplikacie/menu.c
+CMakeFiles/client.dir/logika_aplikacie/menu.c.o: CMakeFiles/client.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/damko/Semestralka_IPC_Linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/client.dir/logika_aplikacie/menu.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/client.dir/logika_aplikacie/menu.c.o -MF CMakeFiles/client.dir/logika_aplikacie/menu.c.o.d -o CMakeFiles/client.dir/logika_aplikacie/menu.c.o -c /home/damko/Semestralka_IPC_Linux/logika_aplikacie/menu.c
 
-CMakeFiles/client.dir/menu.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/client.dir/menu.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/damko/Semestralka_IPC_Linux/menu.c > CMakeFiles/client.dir/menu.c.i
+CMakeFiles/client.dir/logika_aplikacie/menu.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/client.dir/logika_aplikacie/menu.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/damko/Semestralka_IPC_Linux/logika_aplikacie/menu.c > CMakeFiles/client.dir/logika_aplikacie/menu.c.i
 
-CMakeFiles/client.dir/menu.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/client.dir/menu.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/damko/Semestralka_IPC_Linux/menu.c -o CMakeFiles/client.dir/menu.c.s
+CMakeFiles/client.dir/logika_aplikacie/menu.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/client.dir/logika_aplikacie/menu.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/damko/Semestralka_IPC_Linux/logika_aplikacie/menu.c -o CMakeFiles/client.dir/logika_aplikacie/menu.c.s
 
 # Object files for target client
 client_OBJECTS = \
-"CMakeFiles/client.dir/main.c.o" \
-"CMakeFiles/client.dir/server.c.o" \
-"CMakeFiles/client.dir/klient.c.o" \
-"CMakeFiles/client.dir/ipc_shm.c.o" \
-"CMakeFiles/client.dir/menu.c.o"
+"CMakeFiles/client.dir/logika_aplikacie/main.c.o" \
+"CMakeFiles/client.dir/logika_aplikacie/server.c.o" \
+"CMakeFiles/client.dir/logika_aplikacie/klient.c.o" \
+"CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.o" \
+"CMakeFiles/client.dir/logika_aplikacie/menu.c.o"
 
 # External object files for target client
 client_EXTERNAL_OBJECTS =
 
-client: CMakeFiles/client.dir/main.c.o
-client: CMakeFiles/client.dir/server.c.o
-client: CMakeFiles/client.dir/klient.c.o
-client: CMakeFiles/client.dir/ipc_shm.c.o
-client: CMakeFiles/client.dir/menu.c.o
+client: CMakeFiles/client.dir/logika_aplikacie/main.c.o
+client: CMakeFiles/client.dir/logika_aplikacie/server.c.o
+client: CMakeFiles/client.dir/logika_aplikacie/klient.c.o
+client: CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.o
+client: CMakeFiles/client.dir/logika_aplikacie/menu.c.o
 client: CMakeFiles/client.dir/build.make
 client: CMakeFiles/client.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/damko/Semestralka_IPC_Linux/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking C executable client"

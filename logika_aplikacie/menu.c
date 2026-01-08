@@ -183,7 +183,7 @@ int zobraz_pociatocne_menu(ZdielaneData_t* shm) {
 
         // 1. Výber módu a súboru pre budúce uloženie výsledkov
         shm->mod = (nacitaj_cele_cislo("Mod (0-Interaktivny., 1-Sumarny.): ", 0, 1) == 0) ? INTERAKTIVNY : SUMARNY;
-        nacitaj_nazov_suboru(shm->nazov_suboru, "Zadaj nazov suboru pre ULOZENIE");
+        nacitaj_nazov_suboru(shm->nazov_suboru, "Zadaj nazov suboru pre ULOZENIE (ak nechces ukladat stlac ENTER)");
 
         // 2. Nastavenie rozsahu simulácie
         if (shm->mod == SUMARNY) {

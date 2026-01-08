@@ -8,11 +8,11 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/damko/Semestralka_IPC_Linux/ipc_shm.c" "CMakeFiles/client.dir/ipc_shm.c.o" "gcc" "CMakeFiles/client.dir/ipc_shm.c.o.d"
-  "/home/damko/Semestralka_IPC_Linux/klient.c" "CMakeFiles/client.dir/klient.c.o" "gcc" "CMakeFiles/client.dir/klient.c.o.d"
-  "/home/damko/Semestralka_IPC_Linux/main.c" "CMakeFiles/client.dir/main.c.o" "gcc" "CMakeFiles/client.dir/main.c.o.d"
-  "/home/damko/Semestralka_IPC_Linux/menu.c" "CMakeFiles/client.dir/menu.c.o" "gcc" "CMakeFiles/client.dir/menu.c.o.d"
-  "/home/damko/Semestralka_IPC_Linux/server.c" "CMakeFiles/client.dir/server.c.o" "gcc" "CMakeFiles/client.dir/server.c.o.d"
+  "/home/damko/Semestralka_IPC_Linux/logika_aplikacie/ipc_shm.c" "CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.o" "gcc" "CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.o.d"
+  "/home/damko/Semestralka_IPC_Linux/logika_aplikacie/klient.c" "CMakeFiles/client.dir/logika_aplikacie/klient.c.o" "gcc" "CMakeFiles/client.dir/logika_aplikacie/klient.c.o.d"
+  "/home/damko/Semestralka_IPC_Linux/logika_aplikacie/main.c" "CMakeFiles/client.dir/logika_aplikacie/main.c.o" "gcc" "CMakeFiles/client.dir/logika_aplikacie/main.c.o.d"
+  "/home/damko/Semestralka_IPC_Linux/logika_aplikacie/menu.c" "CMakeFiles/client.dir/logika_aplikacie/menu.c.o" "gcc" "CMakeFiles/client.dir/logika_aplikacie/menu.c.o.d"
+  "/home/damko/Semestralka_IPC_Linux/logika_aplikacie/server.c" "CMakeFiles/client.dir/logika_aplikacie/server.c.o" "gcc" "CMakeFiles/client.dir/logika_aplikacie/server.c.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

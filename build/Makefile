@@ -142,140 +142,140 @@ client/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/build
 .PHONY : client/fast
 
-ipc_shm.o: ipc_shm.c.o
-.PHONY : ipc_shm.o
+logika_aplikacie/ipc_shm.o: logika_aplikacie/ipc_shm.c.o
+.PHONY : logika_aplikacie/ipc_shm.o
 
 # target to build an object file
-ipc_shm.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/ipc_shm.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/ipc_shm.c.o
-.PHONY : ipc_shm.c.o
+logika_aplikacie/ipc_shm.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/ipc_shm.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.o
+.PHONY : logika_aplikacie/ipc_shm.c.o
 
-ipc_shm.i: ipc_shm.c.i
-.PHONY : ipc_shm.i
+logika_aplikacie/ipc_shm.i: logika_aplikacie/ipc_shm.c.i
+.PHONY : logika_aplikacie/ipc_shm.i
 
 # target to preprocess a source file
-ipc_shm.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/ipc_shm.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/ipc_shm.c.i
-.PHONY : ipc_shm.c.i
+logika_aplikacie/ipc_shm.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/ipc_shm.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.i
+.PHONY : logika_aplikacie/ipc_shm.c.i
 
-ipc_shm.s: ipc_shm.c.s
-.PHONY : ipc_shm.s
+logika_aplikacie/ipc_shm.s: logika_aplikacie/ipc_shm.c.s
+.PHONY : logika_aplikacie/ipc_shm.s
 
 # target to generate assembly for a file
-ipc_shm.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/ipc_shm.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/ipc_shm.c.s
-.PHONY : ipc_shm.c.s
+logika_aplikacie/ipc_shm.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/ipc_shm.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/ipc_shm.c.s
+.PHONY : logika_aplikacie/ipc_shm.c.s
 
-klient.o: klient.c.o
-.PHONY : klient.o
+logika_aplikacie/klient.o: logika_aplikacie/klient.c.o
+.PHONY : logika_aplikacie/klient.o
 
 # target to build an object file
-klient.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/klient.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/klient.c.o
-.PHONY : klient.c.o
+logika_aplikacie/klient.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/klient.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/klient.c.o
+.PHONY : logika_aplikacie/klient.c.o
 
-klient.i: klient.c.i
-.PHONY : klient.i
+logika_aplikacie/klient.i: logika_aplikacie/klient.c.i
+.PHONY : logika_aplikacie/klient.i
 
 # target to preprocess a source file
-klient.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/klient.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/klient.c.i
-.PHONY : klient.c.i
+logika_aplikacie/klient.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/klient.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/klient.c.i
+.PHONY : logika_aplikacie/klient.c.i
 
-klient.s: klient.c.s
-.PHONY : klient.s
+logika_aplikacie/klient.s: logika_aplikacie/klient.c.s
+.PHONY : logika_aplikacie/klient.s
 
 # target to generate assembly for a file
-klient.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/klient.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/klient.c.s
-.PHONY : klient.c.s
+logika_aplikacie/klient.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/klient.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/klient.c.s
+.PHONY : logika_aplikacie/klient.c.s
 
-main.o: main.c.o
-.PHONY : main.o
+logika_aplikacie/main.o: logika_aplikacie/main.c.o
+.PHONY : logika_aplikacie/main.o
 
 # target to build an object file
-main.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/main.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/main.c.o
-.PHONY : main.c.o
+logika_aplikacie/main.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/main.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/main.c.o
+.PHONY : logika_aplikacie/main.c.o
 
-main.i: main.c.i
-.PHONY : main.i
+logika_aplikacie/main.i: logika_aplikacie/main.c.i
+.PHONY : logika_aplikacie/main.i
 
 # target to preprocess a source file
-main.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/main.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/main.c.i
-.PHONY : main.c.i
+logika_aplikacie/main.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/main.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/main.c.i
+.PHONY : logika_aplikacie/main.c.i
 
-main.s: main.c.s
-.PHONY : main.s
+logika_aplikacie/main.s: logika_aplikacie/main.c.s
+.PHONY : logika_aplikacie/main.s
 
 # target to generate assembly for a file
-main.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/main.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/main.c.s
-.PHONY : main.c.s
+logika_aplikacie/main.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/main.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/main.c.s
+.PHONY : logika_aplikacie/main.c.s
 
-menu.o: menu.c.o
-.PHONY : menu.o
+logika_aplikacie/menu.o: logika_aplikacie/menu.c.o
+.PHONY : logika_aplikacie/menu.o
 
 # target to build an object file
-menu.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/menu.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/menu.c.o
-.PHONY : menu.c.o
+logika_aplikacie/menu.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/menu.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/menu.c.o
+.PHONY : logika_aplikacie/menu.c.o
 
-menu.i: menu.c.i
-.PHONY : menu.i
+logika_aplikacie/menu.i: logika_aplikacie/menu.c.i
+.PHONY : logika_aplikacie/menu.i
 
 # target to preprocess a source file
-menu.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/menu.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/menu.c.i
-.PHONY : menu.c.i
+logika_aplikacie/menu.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/menu.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/menu.c.i
+.PHONY : logika_aplikacie/menu.c.i
 
-menu.s: menu.c.s
-.PHONY : menu.s
+logika_aplikacie/menu.s: logika_aplikacie/menu.c.s
+.PHONY : logika_aplikacie/menu.s
 
 # target to generate assembly for a file
-menu.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/menu.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/menu.c.s
-.PHONY : menu.c.s
+logika_aplikacie/menu.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/menu.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/menu.c.s
+.PHONY : logika_aplikacie/menu.c.s
 
-server.o: server.c.o
-.PHONY : server.o
+logika_aplikacie/server.o: logika_aplikacie/server.c.o
+.PHONY : logika_aplikacie/server.o
 
 # target to build an object file
-server.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/server.c.o
-.PHONY : server.c.o
+logika_aplikacie/server.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/server.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/server.c.o
+.PHONY : logika_aplikacie/server.c.o
 
-server.i: server.c.i
-.PHONY : server.i
+logika_aplikacie/server.i: logika_aplikacie/server.c.i
+.PHONY : logika_aplikacie/server.i
 
 # target to preprocess a source file
-server.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/server.c.i
-.PHONY : server.c.i
+logika_aplikacie/server.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/server.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/server.c.i
+.PHONY : logika_aplikacie/server.c.i
 
-server.s: server.c.s
-.PHONY : server.s
+logika_aplikacie/server.s: logika_aplikacie/server.c.s
+.PHONY : logika_aplikacie/server.s
 
 # target to generate assembly for a file
-server.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/server.c.s
-.PHONY : server.c.s
+logika_aplikacie/server.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/logika_aplikacie/server.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/client.dir/build.make CMakeFiles/client.dir/logika_aplikacie/server.c.s
+.PHONY : logika_aplikacie/server.c.s
 
 # Help Target
 help:
@@ -287,21 +287,21 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... client"
 	@echo "... server"
-	@echo "... ipc_shm.o"
-	@echo "... ipc_shm.i"
-	@echo "... ipc_shm.s"
-	@echo "... klient.o"
-	@echo "... klient.i"
-	@echo "... klient.s"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
-	@echo "... menu.o"
-	@echo "... menu.i"
-	@echo "... menu.s"
-	@echo "... server.o"
-	@echo "... server.i"
-	@echo "... server.s"
+	@echo "... logika_aplikacie/ipc_shm.o"
+	@echo "... logika_aplikacie/ipc_shm.i"
+	@echo "... logika_aplikacie/ipc_shm.s"
+	@echo "... logika_aplikacie/klient.o"
+	@echo "... logika_aplikacie/klient.i"
+	@echo "... logika_aplikacie/klient.s"
+	@echo "... logika_aplikacie/main.o"
+	@echo "... logika_aplikacie/main.i"
+	@echo "... logika_aplikacie/main.s"
+	@echo "... logika_aplikacie/menu.o"
+	@echo "... logika_aplikacie/menu.i"
+	@echo "... logika_aplikacie/menu.s"
+	@echo "... logika_aplikacie/server.o"
+	@echo "... logika_aplikacie/server.i"
+	@echo "... logika_aplikacie/server.s"
 .PHONY : help
 
 
