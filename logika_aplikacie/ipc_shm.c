@@ -14,7 +14,7 @@
 #include "../headers/ipc_shm.h"
 #include "../headers/common.h"
 
-#define SHM_KEY 1234 //nahodny kluc pre identifikaciu pamate
+
 
 /**
  * @brief Vytvorí a pripojí segment zdieľanej pamäte pre štruktúru ZdielaneData_t.

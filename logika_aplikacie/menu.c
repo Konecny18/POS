@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/shm.h>
 
 #include "../headers/client_menu.h"
 
@@ -174,6 +175,24 @@ int zobraz_pociatocne_menu(ZdielaneData_t* shm) {
         nacitaj_nazov_suboru(shm->nazov_suboru, "Zadaj nazov suboru pre NACITANIE");
         shm->mod = (nacitaj_cele_cislo("Mod (0-Interaktivny., 1-Sumarny.): ", 0, 1) == 0) ? INTERAKTIVNY : SUMARNY;
     } else if (volba == 3) {
+        // Skúsime sa pripojiť k SHM
+        ZdielaneData_t* existujuce_shm = shm_create_and_attach(SHM_KEY);
+
+        if (existujuce_shm != NULL) {
+            // Kontrola inicializácie (musí byť viac ako 0 riadkov a stĺpcov)
+            //Az po zadani riadkov a stlpcov sa bude moct pripojit cez druhy terminal druhy clovek
+            if (existujuce_shm->riadky <= 0 || existujuce_shm->stlpece <= 0) {
+                printf("\n[CHYBA] Nie je spustená žiadna simulácia.\n");
+                printf("Dáta v zdieľanej pamäti nie sú inicializované.\n");
+
+                // DÔLEŽITÉ: Tu voláme iba shmdt cez tvoju funkciu (bez RMID!),
+                // aby sme neodstránili pamäť pre ostatných
+                shmdt(existujuce_shm);
+
+                // Namiesto rekurzie jednoducho vrátime špeciálny kód alebo znova zavoláme menu
+                return zobraz_pociatocne_menu(shm);
+            }
+        }
         // PRIPOJENIE: Tu nič nenastavujem, klient len skočí do zobrazovacej slučky
         printf("\n [MENU] Pripajam sa k existujucej simulacii...\n");
         return 3;

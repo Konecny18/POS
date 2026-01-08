@@ -51,13 +51,17 @@ CMakeFiles/client.dir/logika_aplikacie/menu.c.o: \
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h /usr/include/string.h \
  /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
- /usr/include/strings.h \
- /home/damko/Semestralka_IPC_Linux/logika_aplikacie/../headers/client_menu.h \
- /home/damko/Semestralka_IPC_Linux/logika_aplikacie/../headers/ipc_shm.h \
- /usr/include/semaphore.h /usr/include/x86_64-linux-gnu/bits/semaphore.h \
- /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
+ /usr/include/strings.h /usr/include/x86_64-linux-gnu/sys/shm.h \
  /usr/include/x86_64-linux-gnu/sys/ipc.h \
  /usr/include/x86_64-linux-gnu/bits/ipctypes.h \
  /usr/include/x86_64-linux-gnu/bits/ipc.h \
  /usr/include/x86_64-linux-gnu/bits/ipc-perm.h \
+ /usr/include/x86_64-linux-gnu/bits/shm.h \
+ /usr/include/x86_64-linux-gnu/bits/shmlba.h \
+ /usr/include/x86_64-linux-gnu/bits/types/struct_shmid_ds.h \
+ /usr/include/x86_64-linux-gnu/bits/types/struct_shmid64_ds.h \
+ /home/damko/Semestralka_IPC_Linux/logika_aplikacie/../headers/client_menu.h \
+ /home/damko/Semestralka_IPC_Linux/logika_aplikacie/../headers/ipc_shm.h \
+ /usr/include/semaphore.h /usr/include/x86_64-linux-gnu/bits/semaphore.h \
+ /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
  /home/damko/Semestralka_IPC_Linux/logika_aplikacie/../headers/common.h
