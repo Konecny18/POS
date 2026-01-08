@@ -16,19 +16,29 @@
  * @return NULL po ukončení vlákna.
  */
 void* kontrola_pipe(void* arg) {
+    // 1. PRETYPOVANIE ARGUMENTU
+    // Premeníme všeobecný void pointer späť na štruktúru s mojimi dátami
     VlaknoArgs_t* args = (VlaknoArgs_t*)arg;
     char buffer[256];
 
-    //read je blokujuce vlakno tu bude spat kym server nieco neposle
+    // 2. BLOKUJÚCE ČÍTANIE (Pipe)
+    // Funkcia 'read' je blokujúca – to znamená, že toto vlákno tu bude "spať"
+    // a nebude spotrebovávať žiadny výkon CPU, kým server niečo neodošle do pipe.
     ssize_t n;
     while ((n = read(args->pipe_read_fd, buffer, sizeof(buffer) - 1)) > 0) {
+        // 3. OŠETRENIE REŤAZCA
+        // Na koniec prijatých dát pridáme nulový znak '\0', aby sme vytvorili platný C-string
         buffer[n] = '\0';
-        // ulozime do lokalneho log buffra, neprebudzujeme vykreslovanie na zaklade textovych logov
+        // 4. ULOŽENIE DO LOKÁLNEHO BUFFRA
+        // Správu sa nesnažím hneď vypísať (printf), pretože by nám rozbila mriežku/tabuľku.
+        // Namiesto toho ju uložím do 'lokalny_log_buffer', ktorý renderer (obsluz_vykreslovanie)
+        // vykreslí na správnom mieste pod legendou pri ďalšom prekreslení.
         snprintf(args->lokalny_log_buffer, 256, "%s", buffer);
 
-        // predosle chovanie: sem_post(&args->shm->data_ready);
-        // Uprava: log spravy nebudu automaticky prebudzovat renderer; renderer bude prebudzovany z praveho data_ready signalu od servera
+        // Poznámka: Toto vlákno zámerne nevyvoláva 'sem_post(&args->shm->data_ready)'.
+        // Nechcem prekresľovať celú obrazovku len kvôli novému logu, počkáme na zmenu dát.
     }
+    // Ak 'read' vráti 0 alebo menej, znamená to, že pipe bola zatvorená (server sa vypol)
     return NULL;
 }
 
@@ -42,18 +52,18 @@ void* kontrola_pipe(void* arg) {
  * @param shm Ukazovateľ na zdieľanú pamäť obsahujúcu stav simulácie.
  */
 void vykresli_legendu(ZdielaneData_t* shm, char* log) {
-    // PRIDANÉ: Zobrazenie aktuálnej replikácie podľa bodu 10 zadania
+    // 1. ZOBRAZENIE LOGOV A REPLIKÁCIÍ
+    // Podmienka kontroluje, či ide o hromadnú simuláciu (viac ako 1 replikácia).
     if (shm->total_replikacie > 1) {
-        // int aktual = shm->aktualne_replikacie + 1;
-        // if (aktual < 1) aktual = 0; // ochrana, ak este nie je nastavene
-        // if (aktual > shm->total_replikacie) aktual = shm->total_replikacie;
-        // printf("\n");
-        // printf(" REPLIKÁCIA: %d / %d\n", aktual, shm->total_replikacie);
+        // Ak existuje nejaký textový log zo servera (prijatý cez pipe), vypíšem ho.
+        // log[0] != '\n' zabezpečí, že nevypisujem prázdne riadky.
         if (log && log[0] != '\n') {
             printf(" | %s", log);
         }
         printf("\n");
     }
+
+    // Rozlišujeme výpis podľa toho, či simulácia ešte beží alebo už skončila.
     if (shm->stav == SIM_FINISHED) {
         printf("\n------------------------------------------------------------\n");
         printf(" OVLÁDANIE:\n");
@@ -63,53 +73,34 @@ void vykresli_legendu(ZdielaneData_t* shm, char* log) {
         printf("------------------------------------------------------------\n");
         printf(" STAV: Simulácia úspešne dokončená. Prezeráte si výsledky.\n");
         printf("[KLIENT] zadaj prikaz: \n");
+        // fflush(stdout) aby text "Zadaj príkaz" nezostal v buffri.
+        fflush(stdout);
     } else if (shm->stav == SIM_RUNNING) {
         printf(" STAV: Simulácia práve prebieha...\n");
+        printf(" (Môžete stláčať [M] pre zmenu módu alebo [Q] pre predčasné ukončenie)\n");
     }
 }
 
-/**
- * @brief Prepne lokálny režim zobrazenia pre jednotlivého klienta.
- *
- * Táto funkcia mení lokálny stav zobrazenia (priemer krokov vs. pravdepodobnosť)
- * bez ovplyvnenia ostatných klientov. Je určená pre spracovanie lokálnych klávesových
- * vstupov.
- *
- * @param klavesa Kód stlačenej klávesy.
- * @param p_rezim Ukazovateľ na premennú obsahujúcu aktuálny režim zobrazenia;
- *                 funkcia prepne hodnotu na druhý režim.
- */
-// void prepni_lokalny_rezim_zobrazenia(int klavesa, RezimZobrazenia_t* p_rezim) {
-//     if (klavesa == 'v' || klavesa == 'V') {
-//         *p_rezim = (*p_rezim == ZOBRAZ_PRIEMER_KROKOV) ? ZOBRAZ_PRAVDEPODOBNOST_K : ZOBRAZ_PRIEMER_KROKOV;
-//     }
-// }
-
-/**
- * @brief Vlákno pre asynchrónne snímanie vstupu z klávesnice.
- *
- * Spracováva klávesové skratky: ukončenie ('q'), prepnutie módu ('m') a
- * prepnutie lokálneho zobrazenia ('v'). Mení stav v zdieľanej pamäti pod mutexom
- * a notifikujte server/klienta cez semafóry.
- *
- * @param arg Ukazovateľ na štruktúru typu VlaknoArgs_t (obsahuje `shm` a `p_rezim`).
- * @return NULL pri ukončení vlákna.
- */
 void* kontrola_klavestnice(void* arg) {
+    // 1. ROZBALENIE ARGUMENTOV
+    // Z void pointera získame prístup k štruktúre, ktorá obsahuje SHM aj lokálny režim
     VlaknoArgs_t* args = (VlaknoArgs_t*)arg;
     ZdielaneData_t* shm = args->shm;
-    char c;
+    int c; // use int for getchar() return to avoid narrowing issues
+
+    // 2. HLAVNÝ CYKLUS VLÁKNA
+    // Vlákno beží, kým nie je vyžiadané ukončenie simulácie (cez 'q' alebo zo strany servera)
     while (shm->stav != SIM_STOP_REQUESTED && shm->stav != SIM_EXIT) {
+        // Program tu zastane a čaká, kým používateľ niečo nenapíše a nestlačí Enter
         c = getchar();
+
+        // Ignoruj Enter a prázdne znaky, aby sa cyklus neprekrúcal zbytočne
+        if (c == '\n' || c == '\r' || c == ' ') {
+            continue;
+        }
 
         //ukoncenie pomoc stalecnia q
         if (c == 'q' || c == 'Q') {
-            // sem_wait(&shm->shm_mutex);
-            // shm->stav = SIM_STOP_REQUESTED;
-            // sem_post(&shm->shm_mutex);
-            //
-            // sem_post(&shm->data_ready);
-
             // 1. Zmeníme stav OKAMŽITE bez čakania na mutex
             // Pri jednoduchom zápise do int v SHM to nespôsobí pád
             shm->stav = SIM_STOP_REQUESTED;
@@ -123,8 +114,9 @@ void* kontrola_klavestnice(void* arg) {
 
         // 2. Prepnutie MODU (Zdieľané - prepne všetkým používateľom v SHM)
         if (c == 'm' || c == 'M') {
-            printf("\033[H\033[J");
+            //printf("\033[H\033[J");
             sem_wait(&shm->shm_mutex);
+            // Zmena módu v zdieľanej pamäti (všetci klienti uvidia zmenu)
             shm->mod = (shm->mod == INTERAKTIVNY) ? SUMARNY : INTERAKTIVNY;
             sem_post(&shm->shm_mutex);
             sem_post(&shm->data_ready); //prebud klienta pre okamzity update
@@ -132,12 +124,16 @@ void* kontrola_klavestnice(void* arg) {
 
         //prepnutie typu sumaru (lokalne)
         if (c == 'v' || c == 'V') {
-            printf("\033[H\033[J");
+            //printf("\033[H\033[J");
             char cmd = 'V';
-            write(args->socket_fd, &cmd, 1);
+            // Ak simulácia beží, pošleme signál serveru cez socket
+            if (shm->stav != SIM_FINISHED) {
+                write(args->socket_fd, &cmd, 1);
+            }
 
+            // Zmena lokálneho režimu (vplýva len na tento terminál)
             *args->p_rezim = !(*args->p_rezim);
-            //prepni_lokalny_rezim_zobrazenia(c, args->p_rezim);
+            // Signalizujeme zmenu pre prekreslenie
             sem_post(&shm->data_ready);
         }
     }
@@ -178,29 +174,63 @@ void vykresli_mriezku_s_chodcom(ZdielaneData_t* shm) {
  * @param rezim Režim zobrazenia (ZOBRAZ_PRIEMER_KROKOV alebo ZOBRAZ_PRAVDEPODOBNOST_K).
  */
 void vykresli_tabulku_statistik(ZdielaneData_t* shm, RezimZobrazenia_t rezim) {
-    //vypise tabulku a tie vypisi az na finalnej replikacii
-    if ((shm->aktualne_replikacie + 1) == shm->total_replikacie) {
-        printf("\n ---SUMARNY MOD---\n");
-        printf("Zobrazenie: %s\n\n", (rezim == ZOBRAZ_PRIEMER_KROKOV) ? "PRIEMERNY POCET KROKOV" : "PRAVDEPODOBNOST DOSIAHNUTIA (K)");
 
-        for (int riadok = 0; riadok < shm->riadky; riadok++) {
-            for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
-                if (shm->svet[riadok][stlpec] == PREKAZKA) {
-                    printf("| ### |");
-                } else {
-                    if (rezim == ZOBRAZ_PRIEMER_KROKOV) {
-                        double priemer = (double)shm->vysledky[riadok][stlpec].avg_kroky / shm->total_replikacie;
-                        printf("| %5.2f |", priemer);
-                    } else {
-                        double uspesnost = ((double)shm->vysledky[riadok][stlpec].pravdepodobnost_dosiahnutia / shm->total_replikacie * 100);
-                        printf("| %3.0f%%  |", uspesnost);
-                    }
-                }
-            }
-            printf("\n");
+    int completed_repl = 0;
+    // 1. URČENIE POČTU DOKONČENÝCH REPLIKÁCIÍ (Menovateľ)
+    // Ak je simulácia na konci, použijeme celkový plánovaný počet.
+    if (shm->stav == SIM_FINISHED) {
+        completed_repl = shm->total_replikacie;
+    } else {
+        // Ak ešte beží, vezmeme aktuálne číslo zo zdieľanej pamäte.
+        // Server toto číslo zvyšuje po každej dokončenej replikácii.
+        if (shm->aktualne_replikacie > 0) {
+            completed_repl = shm->aktualne_replikacie; // already 1-based
+        } else {
+            completed_repl = 0;
         }
     }
-    // printf("\n");
+
+    // OCHRANA PRED DELENÍM NULOU:
+    // Ak ešte neprebehla ani jedna replikácia, nastavíme menovateľ (denom) na 1,
+    // aby program nespadol pri výpočte priemeru (zobrazia sa nuly).
+    int denom = (completed_repl > 0) ? completed_repl : 1;
+
+    printf("\n ---SUMARNY MOD---\n");
+    printf("Zobrazenie: %s\n\n", (rezim == ZOBRAZ_PRIEMER_KROKOV) ? "PRIEMERNY POCET KROKOV" : "PRAVDEPODOBNOST DOSIAHNUTIA (K)");
+
+    // 2. PRECHÁDZANIE MATICE SVETA
+    for (int riadok = 0; riadok < shm->riadky; riadok++) {
+        for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
+            // Ak je na políčku prekážka, vypíšeme fixný znak
+            if (shm->svet[riadok][stlpec] == PREKAZKA) {
+                printf("| ### |");
+            } else {
+                if (rezim == ZOBRAZ_PRIEMER_KROKOV) {
+                    // Vypočítame priemer: celkový súčet krokov / počet dokončených replikácií
+                    double priemer = (double)shm->vysledky[riadok][stlpec].avg_kroky / denom;
+                    printf("| %5.2f |", priemer);
+                } else {
+                    // Vypočítame úspešnosť v %: (úspešné dosiahnutia / počet replikácií) * 100
+                    double uspesnost = ((double)shm->vysledky[riadok][stlpec].pravdepodobnost_dosiahnutia / denom * 100.0);
+
+                    // OREZAŤ HODNOTY: Pre istotu udržíme percentá v rozsahu 0-100
+                    if (uspesnost < 0.0) uspesnost = 0.0;
+                    if (uspesnost > 100.0) uspesnost = 100.0;
+                    printf("| %3.0f%%  |", uspesnost);
+                }
+            }
+        }
+        printf("\n");
+    }
+
+    // 4. INFORMAČNÝ RIADOK O PROGRESE
+    // Zobrazuje sa pod tabuľkou, aby používateľ videl, ako ďaleko je simulácia.
+    if (completed_repl > 0) {
+        int display_done = completed_repl;
+        // Ošetrenie, aby PROGRESS neukázal viac ako 100% (napr. pri dobehu vlákien)
+        if (display_done > shm->total_replikacie) display_done = shm->total_replikacie;
+        printf("\nPROGRESS: %d / %d\n", display_done, shm->total_replikacie);
+    }
 }
 
 /**
@@ -208,18 +238,18 @@ void vykresli_tabulku_statistik(ZdielaneData_t* shm, RezimZobrazenia_t rezim) {
  * * Táto funkcia zabezpečuje vymazanie obrazovky a volanie príslušných podprogramov
  * pre interaktívny (mapa s chodcom) alebo sumárny (tabuľka štatistík) mód.
  * * @param shm Smerník na zdieľanú pamäť.
- * @param rezim Aktuálne zvolený typ zobrazenia v sumárnom móde (priemer/pravdepodobnosť).
+ * @param rezim Aktuálne zvolené typ zobrazenia v sumárnom móde (priemer/pravdepodobnosť).
  */
 void obsluz_vykreslovanie(ZdielaneData_t* shm, RezimZobrazenia_t rezim, char* log) {
     // ANSI kód pre návrat kurzora na začiatok a vymazanie obrazovky
     printf("\033[H\033[J");
 
-    if (shm->mod == INTERAKTIVNY) {
-        vykresli_mriezku_s_chodcom(shm);
-        //vypise finalne vysledky az na poslednej replikacii
-    } else if (shm->mod == SUMARNY && ((shm->aktualne_replikacie + 1) == shm->total_replikacie)) {
+    if (shm->mod == SUMARNY) {
         printf("\n >>> FINALNE VYSLEDKY <<<\n");
         vykresli_tabulku_statistik(shm, rezim);
+        //else if (shm->mod == SUMARNY && ((shm->aktualne_replikacie + 1) == shm->total_replikacie))
+    } else if (shm->mod == INTERAKTIVNY) {
+        vykresli_mriezku_s_chodcom(shm);
     } else {
         printf("[KLIENT] Simulujem %d replikacii. Caka sa na vysledky...\n", shm->total_replikacie);
     }
@@ -235,11 +265,14 @@ void obsluz_vykreslovanie(ZdielaneData_t* shm, RezimZobrazenia_t rezim, char* lo
  * * @param shm Smerník na zdieľanú pamäť.
  */
 void spusti_klienta(ZdielaneData_t* shm, int pipe_read_fd, int socket_fd) {
+    // 1. LOKÁLNA KONFIGURÁCIA KLIENTA
+    // aktualny_rezim určuje, či vidíme priemerný počet krokov alebo % úspešnosť (prepína sa klávesom V)
     RezimZobrazenia_t aktualny_rezim = ZOBRAZ_PRIEMER_KROKOV;
     char log_buffer[256] = "";
 
+    // 2. PRÍPRAVA VLÁKIEN
     pthread_t thread_id, pipe_thread_id;
-    //inicializacia args
+    // Štruktúra args slúži na odovzdanie viacerých parametrov (SHM, deskriptory, lokálne stavy) do vlákien
     VlaknoArgs_t args = {
         .shm = shm,
         .p_rezim = &aktualny_rezim,
@@ -248,70 +281,128 @@ void spusti_klienta(ZdielaneData_t* shm, int pipe_read_fd, int socket_fd) {
         .lokalny_log_buffer = log_buffer
     };
 
-
     printf("[KLIENT] Spusteny, cakam na data...\n");
 
-    // Vytvorenie vlákna pre asynchrónne čítanie klávesnice
+    // Spustenie vlákna pre zachytávanie stlačených kláves (asynchrónny vstup)
     if (pthread_create(&thread_id, NULL, kontrola_klavestnice, &args) != 0) {
         perror("[KLIENT] Nepodarilo sa vytvorit vlakno pre klavesnicu");
         return;
     }
-
+    // Spustenie vlákna pre čítanie textových logov zo servera cez pipe
     if (pthread_create(&pipe_thread_id, NULL, kontrola_pipe, &args) != 0) {
         perror("[KLIENT] Nepodarilo sa vytvorit vlakno pre pipe");
         pthread_cancel(thread_id);
         return;
     }
 
-    while (/*shm->stav != SIM_STOP_REQUESTED && shm->stav != SIM_EXIT*/1) {
-        // Čakanie na notifikáciu od servera, že sú dostupné nové dáta
-        sem_wait(&shm->data_ready);
-
-        // DEBUG: log SHM state to stderr to diagnose partial rendering
-        // fprintf(stderr, "[CLIENT-DEBUG] woke: stav=%d mod=%d riadky=%d stlpece=%d aktualne_replikacie=%d total_replikacie=%d\n",
-        //         shm->stav, shm->mod, shm->riadky, shm->stlpece, shm->aktualne_replikacie, shm->total_replikacie);
-
-        // If server hasn't moved past INIT yet, ignore this wake-up (it's likely a log or stale signal)
-        // if (shm->stav == SIM_INIT) {
-        //     fprintf(stderr, "[CLIENT-DEBUG] Ignoring wake while in SIM_INIT\n");
-        //     continue;
-        // }
-        //
-        // // Guard against invalid dimensions (possible early/uninitialized state) - skip if invalid
-        // if (shm->riadky < 1 || shm->riadky > MAX_ROWS || shm->stlpece < 1 || shm->stlpece > MAX_COLS) {
-        //     fprintf(stderr, "[CLIENT-DEBUG] Invalid dimensions riadky=%d stlpece=%d - ignoring\n", shm->riadky, shm->stlpece);
-        //     continue;
-        // }
-
-        //kvoli tomu ze vlakno mi tu vyselo ked som zadal vela udajov a predcasne som ukoncil simulaciu tak som bol zaseknuty
-        if (shm->stav == SIM_STOP_REQUESTED || shm->stav == SIM_EXIT) {
-            break; // Okamžite vyskočíme z cyklu vykresľovania
-        }
-
-        // Uzamknutie zdieľanej pamäte pred čítaním
+    // 3. SYNCHRONIZÁCIA PO PRIPOJENÍ
+    // Ak sa pripájame k simulácii, ktorá už skončila, automaticky prepneme na sumárny mód
+    if (shm->stav == SIM_FINISHED) {
         sem_wait(&shm->shm_mutex);
-
-        // Vykreslenie aktuálneho stavu
-        obsluz_vykreslovanie(shm, aktualny_rezim, log_buffer);
-
-        int stav_po_vykresleni = shm->stav;
-
-        // Kontrola, či neprišla požiadavka na ukončenie
-        // if (shm->stav == SIM_EXIT || shm->stav == SIM_STOP_REQUESTED || shm->stav == SIM_FINISHED) {
-        //     // Ak je simulácia dokončená, urobíme ešte jeden posledný render
-        //     //obsluz_vykreslovanie(shm, aktualny_rezim);
-        //     sem_post(&shm->shm_mutex);
-        //     break;
-        // }
-        // Uvoľnenie zdieľanej pamäte
+        shm->mod = SUMARNY;
         sem_post(&shm->shm_mutex);
 
-        if (stav_po_vykresleni == SIM_FINISHED) {
-
-        }
+        sem_post(&shm->data_ready);
     }
 
-    // Korektné ukončenie pomocného vlákna a návrat
+    // 4. ČAKANIE NA KONFIGURÁCIU SVETA
+    // Krátka slučka (max 5s), ktorá čaká, kým server zapíše rozmery sveta (riadky/stĺpce).
+    // Bez tohto by klient mohol spadnúť pri pokuse vykresliť maticu 0x0.
+    int wait_loops = 0;
+    while ((shm->riadky < 1 || shm->stlpece < 1) && wait_loops < 50) {
+        // If server is not yet providing dimensions, sleep a bit and retry
+        usleep(100000);
+        wait_loops++;
+    }
+
+    if (shm->riadky < 1 || shm->stlpece < 1) {
+        // Still missing configuration; print a message and continue with a safe empty render
+        printf("[KLIENT] Varovanie: neznama konfiguracia sveta po cakaní, vykreslujem neskor\n");
+    }
+
+    // 5. ČAKANIE NA PRVÉ REÁLNE VÝSLEDKY
+    // Prechádzame SHM a hľadáme, či server už vypočítal aspoň niečo nenulové.
+    // Týmto zabránime "bliknutiu" prázdnej tabuľky hneď po spustení novej simulácie.
+    int waited = 0;
+    const int max_wait_iters = 50; // 50 * 100ms = 5s
+    bool found_data = false;
+    while (waited < max_wait_iters) {
+        sem_wait(&shm->shm_mutex);
+        if (shm->stav == SIM_FINISHED) {
+            found_data = true;
+            sem_post(&shm->shm_mutex);
+            break;
+        }
+
+        // Kontrola, či je v matici výsledkov aspoň jedna nenulová hodnota
+        for (int r = 0; r < shm->riadky && !found_data; r++) {
+            for (int s = 0; s < shm->stlpece; s++) {
+                if (shm->vysledky[r][s].avg_kroky != 0.0 || shm->vysledky[r][s].pravdepodobnost_dosiahnutia != 0.0) {
+                    found_data = true;
+                    break;
+                }
+            }
+        }
+        sem_post(&shm->shm_mutex);
+
+        if (found_data) break;
+        usleep(100000);
+        waited++;
+    }
+
+    // Prvé (počiatočné) vykreslenie obrazovky
+    sem_wait(&shm->shm_mutex);
+    obsluz_vykreslovanie(shm, aktualny_rezim, log_buffer);
+    sem_post(&shm->shm_mutex);
+
+    // small sleep so user can notice the initial render (helps readability)
+    usleep(200000);
+
+    // 6. HLAVNÁ POLLOVACIA SLUČKA (RENDERER)
+    // Keďže POSIX semafory nevedia zobudiť všetkých klientov naraz (broadcast),
+    // používame polling – každých 150ms skontrolujeme, či sa v pamäti niečo zmenilo.
+    int last_repl = -1;
+    int last_stav = -1;
+    int last_mod = -1;
+    int last_zobrazenie = -1;
+    while (1) {
+        // Skúšame skonzumovať signál semaforu bez blokovania, aby hodnota nerástla do nekonečna
+        if (sem_trywait(&shm->data_ready) == 0) {
+            // consumed one pending notification (if any)
+        }
+
+        // Kontrola ukončenia: Ak server nastavil STOP alebo EXIT, klient končí slučku
+        if (shm->stav == SIM_STOP_REQUESTED || shm->stav == SIM_EXIT) {
+            break;
+        }
+
+        // Kritická sekcia: Čítame stavy zo zdieľanej pamäte pod mutexom
+        sem_wait(&shm->shm_mutex);
+        int cur_repl = shm->aktualne_replikacie;
+        int cur_stav = shm->stav;
+        int cur_mod = shm->mod;
+        int cur_zobrazenie = aktualny_rezim;
+
+        // PODMIENKA PREKRESLENIA:
+        // Obrazovku prekreslíme len vtedy, ak sa niečo naozaj zmenilo (replikácia, mód, stav...)
+        if (cur_repl != last_repl || cur_stav != last_stav ||
+            cur_mod != last_mod || cur_zobrazenie != last_zobrazenie) {
+
+            obsluz_vykreslovanie(shm, aktualny_rezim, log_buffer);
+            // Aktualizujeme "posledné známe" stavy pre ďalšiu iteráciu
+            last_repl = cur_repl;
+            last_stav = cur_stav;
+            last_mod = cur_mod;
+            last_zobrazenie = cur_zobrazenie;
+        }
+        sem_post(&shm->shm_mutex);
+
+        // Small sleep so output is human-readable and we don't spin CPU
+        usleep(150000);
+    }
+
+    // 7. UKONČENIE A CLEANUP
+    // Keď hlavná slučka skončí, násilne ukončíme pomocné vlákna a počkáme na ne
     pthread_cancel(thread_id);
     pthread_cancel(pipe_thread_id);
 

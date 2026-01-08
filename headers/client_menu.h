@@ -26,7 +26,7 @@
  *
  * @param shm Ukazovateľ na zdieľanú pamäť, kam sa uložia zvolené nastavenia.
  */
-void zobraz_pociatocne_menu(ZdielaneData_t* shm);
+int zobraz_pociatocne_menu(ZdielaneData_t* shm);
 
 /**
  * @brief Bezpečne načíta celé číslo z konzoly v zadanom rozsahu.

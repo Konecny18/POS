@@ -18,7 +18,15 @@
  * @param sprava Ukazovateľ na C-string správu (musí byť \0-ukončený).
  */
 void posli_log(int pipe_write_fd, const char* sprava) {
-    write(pipe_write_fd, sprava, strlen(sprava) + 1); //+1 kvoli \0
+    // SYSTÉMOVÉ VOLANIE WRITE:
+    // 1. pipe_write_fd: Cieľ, kam zapisujem (v mojom prípade rúra vedúca ku klientovi).
+    // 2. sprava: Smerník na začiatok dát v pamäti.
+    // 3. strlen(sprava) + 1: Počet bajtov, ktoré sa majú preniesť.
+
+    // DÔLEŽITÉ: '+ 1' pridávam preto, aby som preniesol aj ukončovací znak '\0' (null-terminator).
+    // Ak by som ho nepreniesol, klient by nevedel, kde reťazec končí a pri pokuse o výpis
+    // by mohol vypísať náhodné "smetie" z pamäte.
+    write(pipe_write_fd, sprava, strlen(sprava) + 1);
 }
 
 /**
@@ -33,24 +41,26 @@ void posli_log(int pipe_write_fd, const char* sprava) {
  * @param shm Ukazovateľ na zdieľanú štruktúru obsahujúcu výsledky a konfiguráciu.
  */
 void uloz_vysledky_do_suboru(ZdielaneData_t* shm) {
-    //ak nezadal nazov
+    //kontrola nazvu suboru, ak nezadal funkcia skonci
     if (shm->nazov_suboru[0] == '\0') {
         return;
     }
 
+    // 2. OTVORENIE SÚBORU
+    // Režim "w" (write) vytvorí nový súbor alebo prepíše ten pôvodný.
     FILE * file = fopen(shm->nazov_suboru, "w");
     if (file == NULL) {
         perror("Nepodarilo sa otvorit subor na zapis");
         return;
     }
 
-    //uloz zakladne parametre
+    // 3. ULOŽENIE ZÁKLADNÝCH PARAMETROV
     fprintf(file, "%d %d\n", shm->riadky, shm->stlpece);
     fprintf(file, "%d %d\n", shm->total_replikacie, shm->K_max_kroky);
     fprintf(file, "%d\n", shm->pocet_prekazok); // preistotu aj ked nacitavam tu ulozenu mapu
     fprintf(file, "%f %f %f %f \n", shm->pravdepodobnost[0], shm->pravdepodobnost[1], shm->pravdepodobnost[2], shm->pravdepodobnost[3]);
 
-    //ulozenie mapy sveta (0 = prazdne, 1 = prekazka)
+    // 4. ULOŽENIE MAPY SVETA (0 = prazdne, 1 = prekazka)
     for (int i = 0; i < shm->riadky; i++) {
         for (int j = 0; j < shm->stlpece; j++) {
             fprintf(file, "%d ", shm->svet[i][j]);
@@ -58,7 +68,7 @@ void uloz_vysledky_do_suboru(ZdielaneData_t* shm) {
         fprintf(file, "\n");
     }
 
-    //ulozenie vysledkov
+    // 5. VÝPOČET A ULOŽENIE FINÁLNYCH VÝSLEDKOV
     fprintf(file, "--- VYSLEDKY ---\n");
     for (int i = 0; i < shm->riadky; i++) {
         for (int j = 0; j < shm->stlpece; j++) {
@@ -68,6 +78,7 @@ void uloz_vysledky_do_suboru(ZdielaneData_t* shm) {
         }
         fprintf(file, "\n");
     }
+    // 6. ZATVORENIE SÚBORU A POTVRDENIE
     fclose(file);
     printf("[SERVER] Vysledky boli ulozene do suboru: %s\n", shm->nazov_suboru);
 }
@@ -82,12 +93,17 @@ void uloz_vysledky_do_suboru(ZdielaneData_t* shm) {
  * @return true ak bolo načítanie úspešné, inak false.
  */
 bool nacitaj_konfig_zo_suboru(ZdielaneData_t* shm) {
+    // 1. OTVORENIE SÚBORU
+    // Používame režim "r" (read - čítanie).
     FILE* file = fopen(shm->nazov_suboru, "r");
     if (file == NULL) {
         perror("Nepodarilo sa otvorit subor na citanie");
         return false;
     }
 
+    // 2. NAČÍTANIE ZÁKLADNÝCH PARAMETROV
+    // fscanf vracia počet úspešne načítaných hodnôt.
+    // Ak sa nerovná počtu očakávaných premenných (napr. 2), súbor je chybný.
     //nacitanie zakladnych parametrov (riadky, stlpce, replikacie, kroky)
     if (fscanf(file, "%d %d", &shm->riadky, &shm->stlpece) != 2) {
         fclose(file);
@@ -98,13 +114,15 @@ bool nacitaj_konfig_zo_suboru(ZdielaneData_t* shm) {
         return false;
     }
 
-    //nacitanie hustoty prekazok aj ked ju pri nacitani nepouzivam
+    // Načítanie hustoty prekážok (v kontexte načítania zo súboru je to len informatívny údaj)
     if (fscanf(file, "%d", &shm->pocet_prekazok) != 1) {
         fclose(file);
         return false;
     }
 
-    //nacitanie pravdepodobnosti pohybu (pouzivam float docasne kvoli fscanf potom convert do double)
+    // 3. NAČÍTANIE PRAVDEPODOBNOSTÍ POHYBU
+    // Používame dočasné float premenné, pretože fscanf s %f niekedy lepšie spolupracuje
+    // s desatinnými číslami v textovom súbore, následne ich priradíme do double poľa v SHM.
     float p0, p1, p2, p3;
     if (fscanf(file, "%f %f %f %f", &p0, &p1, &p2, &p3) != 4) {
         fclose(file);
@@ -115,18 +133,23 @@ bool nacitaj_konfig_zo_suboru(ZdielaneData_t* shm) {
     shm->pravdepodobnost[2] = p2;
     shm->pravdepodobnost[3] = p3;
 
-    //nacitanie mapy sveta (0 = prazdne, 1 = prekazka)
+    // 4. REKONŠTRUKCIA MAPY SVETA
+    // Postupne prechádzame súbor a plníme dvojrozmerné pole shm->svet.
+    // Očakávame maticu celých čísel (0 pre voľné políčko, 1 pre prekážku).
     for (int i = 0; i < shm->riadky; i++) {
         for (int j = 0; j < shm->stlpece; j++) {
             int hodnota;
             if (fscanf(file, "%d", &hodnota) != 1) {
+                // Ak súbor skončí skôr, než naplníme celú maticu (napr. chýba riadok)
                 fclose(file);
                 return false;
             }
             shm->svet[i][j] = hodnota;
         }
     }
-    //vysledky ma nezaujimaju pre novu simulacii takze zatvaram
+    // 5. UKONČENIE ČÍTANIA
+    // Výsledky uložené v súbore (pod čiarou --- VYSLEDKY ---) pri načítaní ma nezaujímajú,
+    // pretože chcem spustiť novú simuláciu s touto mapou.
     fclose(file);
     return true;
 }
@@ -144,7 +167,8 @@ bool je_svet_validny(ZdielaneData_t* shm) {
     int riadky = shm->riadky;
     int stlpce = shm->stlpece;
 
-    //spocitanie kolko volnych policok vratane ciela v mape je
+    // 1. SPOČÍTANIE VOĽNÝCH POLÍČOK
+    // Najprv zistím, koľko políčok v mape nie je prekážka (teda koľko by som mal navštíviť).
     int celkovy_pocet = 0;
     for (int riadok = 0; riadok < riadky; riadok++) {
         for (int stlpec = 0; stlpec < stlpce; stlpec++) {
@@ -154,45 +178,53 @@ bool je_svet_validny(ZdielaneData_t* shm) {
         }
     }
 
-    //BFS priprava
+    // 2. PRÍPRAVA BFS (Fronta a pole navštívených)
+    // 'navstivene' bráni tomu, aby som sa točili v kruhu.
     bool navstivene[MAX_ROWS][MAX_COLS] = {false};
     int front_r[MAX_ROWS * MAX_COLS];
     int front_s[MAX_ROWS * MAX_COLS];
     int zaciatok = 0;
     int koniec = 0;
 
-    //start z [0,0]
+    // Frontu (queue) simulujem dvoma poliami pre riadky a stĺpce.
     front_r[koniec] = 0;
     front_s[koniec] = 0;
     koniec++;
     navstivene[0][0] = true;
     int dosiahnutelnych = 1;
 
-    //rozlievanie cez BFS
+    // 4. ALGORITMUS ROZLIEVANIA (BFS Slučka)
     while (zaciatok < koniec) {
+        // Vyberiem aktuálne políčko z fronty
         int riadok = front_r[zaciatok];
         int stlpec = front_s[zaciatok];  //oprava indexu po zaciatok++
 
         zaciatok++;
 
+        // Smery pohybu: Hore, Dole, Vľavo, Vpravo
         int posun_riadok[] = {-1, 1, 0, 0};
         int posun_stlpec[] = {0, 0, -1, 1};
 
         for (int i = 0; i < 4; i++) {
-            //toroidny sused
+            // TOROIDNÝ VÝPOČET SÚSEDNÝCH SÚRADNÍC:
+            // Pridaním '+ riadky' a operátorom modulo '%' zabezpečím "pretečenie" cez okraje.
+            // Napr. na riadku 0 smerom hore (-1) dostaneme (0 - 1 + 10) % 10 = 9.
             int novy_riadok = ((riadok + posun_riadok[i] + riadky) % riadky);
             int novy_stlpec = ((stlpec + posun_stlpec[i] + stlpce) % stlpce);
 
+            // Ak sused nie je prekážka a ešte som tam nebol, pridám ho do fronty.
             if (shm->svet[novy_riadok][novy_stlpec] != PREKAZKA && !navstivene[novy_riadok][novy_stlpec]) {
                 navstivene[novy_riadok][novy_stlpec] = true;
                 front_r[koniec] = novy_riadok;
                 front_s[koniec] = novy_stlpec;
                 koniec++;
-                dosiahnutelnych++;
+                dosiahnutelnych++; // Započítam ďalšie nájdené políčko
             }
         }
     }
-    //ak som sa dostal na vsetky volne policka mapa je v poriadku
+    // 5. FINÁLNE OVERENIE
+    // Ak sa počet políčok nájdených cez BFS rovná celkovému počtu voľných políčok,
+    // znamená to, že svet je plne priechodný a neexistujú v ňom "izolované ostrovy".
     return (dosiahnutelnych == celkovy_pocet);
 }
 
@@ -208,16 +240,30 @@ bool je_svet_validny(ZdielaneData_t* shm) {
  * @return Číslo v rozsahu 0..3 reprezentujúce smer.
  */
 int vyber_smeru(ZdielaneData_t* shm) {
+    // 1. GENEROVANIE NÁHODNÉHO ČÍSLA
+    // rand() vráti číslo od 0 do RAND_MAX. Podelením RAND_MAX dostanem
+    // hodnotu v intervale [0.0, 1.0].
     double r = (double)rand() / RAND_MAX;
     double kumulativna_suma = 0;
 
+    // 2. RULETOVÝ VÝBER
+    // Prechádzam všetky 4 možné smery.
     for (int i = 0; i < 4; i++) {
+        // Postupne pripočítavam pravdepodobnosti k sume.
+        // Ak mám napr. pravdepodobnosti [0.1, 0.4, 0.3, 0.2], intervaly budú:
+        // Hore: [0.0 - 0.1], Dole: [0.1 - 0.5], Vľavo: [0.5 - 0.8], Vpravo: [0.8 - 1.0]
         kumulativna_suma += shm->pravdepodobnost[i];
+
+        // Ak vygenerované číslo 'r' padne do aktuálneho intervalu, vrátime index smeru.
         if (r <= kumulativna_suma) {
             return i; //vrati 0(HORE) 1(DOLE) 2(Vlavo) 3(Vpravo)
         }
     }
-    return 3; // Poistka pre zaokrúhľovacie chyby (Vpravo)
+    // 3. BEZPEČNOSTNÁ POISTKA
+    // Kvôli nepresnosti pri práci s 'double' (floating point errors) sa môže stať,
+    // že kumulativna_suma bude napr. 0.99999999999 a 'r' bude 1.0.
+    // V takom prípade vrátim posledný možný smer.
+    return 3;
 }
 
 /**
@@ -234,18 +280,26 @@ void generuj_svet_s_prekazkami(ZdielaneData_t* shm, int percento_prekazok) {
     for (int riadok = 0; riadok < shm->riadky; riadok++) {
         for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
 
-            //ochrana aby ciel [0,0] nemohol byt prekazka
+            // 1. OCHRANA CIEĽA
+            // Bod [0,0] je v tejto simulácii cieľom. Ak by tu bola prekážka,
+            // chodec by nikdy nemohol úspešne dokončiť svoju cestu.
             if (riadok == 0 && stlpec == 0) {
                 shm->svet[riadok][stlpec] = PRAZDNE;
                 continue;
             }
 
-            //vynechanie stred mriezky aby chodec nezacinal v stene
+            // 2. OCHRANA ŠTARTU
+            // Chodec začína v strede mriežky. Ak by sa "narodil" v stene,
+            // simulácia by skončila chybou alebo okamžitým uväznením.
             if (riadok == shm->riadky / 2 && stlpec == shm->stlpece / 2) {
                 shm->svet[riadok][stlpec] = PRAZDNE;
                 continue;
             }
-            //nahodne rozhodnutie ci na policku bude prekazka
+
+            // 3. NÁHODNÉ GENEROVANIE PREKÁŽKY
+            // rand() % 100 vráti číslo od 0 do 99.
+            // Ak je toto číslo menšie ako percento_prekazok, políčko sa stane stenou.
+            // Príklad: Ak zadám 20%, tak cca každé piate políčko bude prekážka.
             if ((rand() % 100) < percento_prekazok) {
                 shm->svet[riadok][stlpec] = PREKAZKA;
             } else {
@@ -272,27 +326,31 @@ void simuluj_chodzu_z_policka(ZdielaneData_t* shm, int start_r, int start_s) {
     int aktualny_s = start_s;
     int pocet_krok = 0;
 
-    //zobrazenie startovacej pozicie chodcu
+    // 1. POČIATOČNÁ VIZUALIZÁCIA (Interaktívny mód)
     if (shm->mod == INTERAKTIVNY) {
-        sem_wait(&shm->shm_mutex);
+        sem_wait(&shm->shm_mutex);  //ZAMKNUT, lebo sa ide menit zdielana pozicia chodca
         shm->aktualna_pozicia_chodca.riadok = aktualny_r;
         shm->aktualna_pozicia_chodca.stlpec = aktualny_s;
-        sem_post(&shm->shm_mutex);
+        sem_post(&shm->shm_mutex);  //ODOMKNUT Dáta v pamäti sú konzistentné
 
+        // Signalizujeme klientovi, že sa zmenili dáta (pozícia chodca), su pripravene na vykreslenie
         sem_post(&shm->data_ready);
-        usleep(200000);
+        usleep(200000); // Pauza, aby si používateľ stihol všimnúť štart
     }
 
-    //chodec ide kym nieje v cieli alebo neprekroci pocet K
+    // 2. HLAVNÝ CYKLUS POHYBU
+    // Chodec kráča, kým nedosiahne cieľ [0,0] ALEBO kým neminie limit K krokov.
     while ((aktualny_r != 0 || aktualny_s != 0) && pocet_krok < shm->K_max_kroky) {
         if (shm->stav == SIM_STOP_REQUESTED) {
             return;
         }
+        // Náhodný výber smeru
         int smer = vyber_smeru(shm) % 4;
         int buduci_r = aktualny_r;
         int buduci_s = aktualny_s;
 
-        //vypocet buducej pozicie s toroidnym efektom (BOD 3)
+        // 3. TOROIDNÝ VÝPOČET BUDÚCEJ POZÍCIE
+        // Modulo (%) zabezpečuje, že pri prejdení okraja sa objavím na opačnej strane.
         switch (smer) {
             case 0: // HORE
                 buduci_r = (aktualny_r - 1 + shm->riadky) % shm->riadky;
@@ -310,36 +368,41 @@ void simuluj_chodzu_z_policka(ZdielaneData_t* shm, int start_r, int start_s) {
                 return;
         }
 
-        // Kontrola prekážky: Ak na cieľovom políčku nie je stena, pohni sa
+        // 4. KONTROLA PREKÁŽOK A AKTUALIZÁCIA POZÍCIE
+        // Chodec sa pohne len vtedy, ak na cieľových súradniciach nie je PREKAZKA.
+        // Ak je tam prekážka, chodec zostáva na mieste (ale krok sa mu započíta).
         if (shm->svet[buduci_r][buduci_s] != PREKAZKA) {
             aktualny_r = buduci_r;
             aktualny_s = buduci_s;
 
-            sem_wait(&shm->shm_mutex);
+            // Zápis aktuálnej pozície do SHM pod mutexom (pre interaktívne zobrazenie)
+            sem_wait(&shm->shm_mutex);  //ZAMKNUTIE lebo ked sa pohne tak treba aktualizovat polohu
             shm->aktualna_pozicia_chodca.riadok = aktualny_r;
             shm->aktualna_pozicia_chodca.stlpec = aktualny_s;
-            sem_post(&shm->shm_mutex);
+            sem_post(&shm->shm_mutex);  //ODOMKNUTIE
         }
 
         pocet_krok++;
 
-        //ak je INTERAKTIVNY mod musi signalizovat klientovi
+        // Ak som v interaktívnom móde, budím klienta po každom kroku a spomalíme beh
         if (shm->mod == INTERAKTIVNY) {
-            sem_post(&shm->data_ready);
+            sem_post(&shm->data_ready); //Po kazdom kroku dam klientovi vediet ze sa ma pohnut panacik
             usleep(100000);
         }
     }
-    // STATISTIKY
-    sem_wait(&shm->shm_mutex);
+    // 5. ZBER ŠTATISTÍK (Kritická sekcia)
+    // Výsledky ukladám na súradnice start_r/start_s, pretože ma zaujíma
+    // štatistika pre bod, odkiaľ chodec VYRAZIL.
+    sem_wait(&shm->shm_mutex);  //ZAMKNUTIE aby si dve vlakna neprepisovali vysledky
 
-    // PRIČÍTAŠ K ŠTARTOVACÍM SÚRADNICIAM, nie k aktuálnym (ktoré sú 0,0)
+    // Pripočítam celkový počet krokov (pre neskorší výpočet priemeru)
     shm->vysledky[start_r][start_s].avg_kroky += pocet_krok;
 
-    // Ak dosiel do ciela [0,0], zvysi pocitadlo uspechov
+    // Ak chodec skončil cyklus preto, že je v cieli [0,0] (a nie kvôli limitu K)
     if (aktualny_r == 0 && aktualny_s == 0) {
         shm->vysledky[start_r][start_s].pravdepodobnost_dosiahnutia++;
     }
-    sem_post(&shm->shm_mutex);
+    sem_post(&shm->shm_mutex);  //ODOMKNUTIE
 }
 
 /**
@@ -350,24 +413,31 @@ void simuluj_chodzu_z_policka(ZdielaneData_t* shm, int start_r, int start_s) {
  * @return true ak bol svet úspešne inicializovaný, false pri chybe alebo požiadavke na stop.
  */
 bool inicializuj_svet_servera(ZdielaneData_t* shm) {
+    // 1. VOĽBA: OPÄTOVNÉ SPUSTENIE (Načítanie)
     if (shm->opetovne_spustenie) {
+        // Skúsim otvoriť súbor špecifikovaný v SHM a naplniť mapu
         if (!nacitaj_konfig_zo_suboru(shm)) {
             printf("[SERVER] Chyba: nepodarilo sa nacitat subor %s\n", shm->nazov_suboru);
             return false;
         }
         printf("[SERVER] Svet uspesne nacitany zo suboru\n");
+        // 2. VOĽBA: NOVÁ SIMULÁCIA (Generovanie)
     } else {
         int pokusy_generovania = 0;
+        // CYKLUS GENERUJ A TESTUJ:
+        // Náhodné generovanie prekážok môže vytvoriť "mŕtve" mapy (odrezané časti).
+        // Preto generujem svet opakovane, kým funkcia je_svet_validny (BFS) nepotvrdí priechodnosť.
         do {
             generuj_svet_s_prekazkami(shm, shm->pocet_prekazok);
             pokusy_generovania++;
 
+            // Poistka: Ak používateľ počas generovania stlačí Q (Ukončiť), hneď vyskočím.
             if (shm->stav == SIM_STOP_REQUESTED) return false;
         } while (!je_svet_validny(shm));
 
         printf("[SERVER] Svet vygenerovany na %d. pokus.\n", pokusy_generovania);
     }
-    return true;
+    return true; // Svet je pripravený na spustenie chodcov
 }
 
 /**
@@ -377,7 +447,9 @@ bool inicializuj_svet_servera(ZdielaneData_t* shm) {
  * * @param shm Smerník na zdieľanú pamäť.
  */
 void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd, int socket_fd, int* p_rezim_logovania) {
-    // Reset výsledkov v zdieľanej pamäti pod mutexom
+    // --- 1. RESET DÁT ---
+    // Pred štartom vynulujem výsledky v zdieľanej pamäti pod mutexom,
+    // aby som nezačínal so starými číslami z predchádzajúceho behu.
     sem_wait(&shm->shm_mutex);
     for(int r = 0; r < shm->riadky; r++) {
         for(int s = 0; s < shm->stlpece; s++) {
@@ -387,15 +459,17 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd, int socke
     }
     sem_post(&shm->shm_mutex);
 
-    // Hlavný cyklus replikácií
+    // --- 2. HLAVNÝ CYKLUS REPLIKÁCIÍ ---
     for (int r_id = 0; r_id < shm->total_replikacie; r_id++) {
-        //printf("\033[H\033[J");
+
+        // Kontrola, či klient počas výpočtu neposlal požiadavku na ukončenie (kláves Q)
         if (shm->stav == SIM_STOP_REQUESTED) {
             write(pipe_write_fd, "SERVER: Zastavujem vypocty na ziadost klienta.", 46);
             return;
         }
         char cmd;
-        // MSG_DONTWAIT zabezpečí, že ak klient nič neposlal, server nezastane a počíta ďalej
+        // KONTROLA SOCKETU (Asynchrónny príkaz)
+        // MSG_DONTWAIT zabezpečí, že ak klient neposlal príkaz 'v', server nečaká a počíta ďalej.
         if (recv(socket_fd, &cmd, 1, MSG_DONTWAIT) > 0) {
             if (cmd == 'V' || cmd == 'v') {
                 *p_rezim_logovania = !(*p_rezim_logovania);
@@ -405,15 +479,18 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd, int socke
 
         shm->aktualne_replikacie = r_id;
 
+        // --- 3. PRECHOD CEZ CELÚ MRIEŽKU ---
         for (int riadok = 0; riadok < shm->riadky; riadok++) {
             for (int stlpec = 0; stlpec < shm->stlpece; stlpec++) {
-                // Kontrola v každom políčku (veľmi dôležité pre veľké mapy)
+
+                // Opakovaná kontrola zastavenia (dôležité pri miliónoch krokov)
                 if (shm->stav == SIM_STOP_REQUESTED) {
                     // Log už posielam o úroveň vyššie, tu stačí return
                     return;
                 }
 
-                // Bod [0,0] je cieľ - automaticky 100% úspešnosť, 0 krokov
+                // ŠPECIÁLNY PRÍPAD: CIEĽ [0,0]
+                // Cieľ sa nesimuluje – chodec je tam hneď, takže úspešnosť je 100% a kroky 0.
                 if (riadok == 0 && stlpec == 0) {
                     if (r_id == 0) {
                         sem_wait(&shm->shm_mutex);
@@ -424,13 +501,15 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd, int socke
                     continue; // Simulácia chôdze pre cieľ sa nespúšťa
                 }
 
+                // Spustím simuláciu len pre voľné políčka (nie steny)
                 if (shm->svet[riadok][stlpec] != PREKAZKA) {
                     simuluj_chodzu_z_policka(shm, riadok, stlpec);
                 }
             }
         }
 
-        // 3. VÝPOČET GLOBÁLNEHO PRIEMERU (pre Log)
+        // --- 4. VÝPOČET GLOBÁLNEJ ŠTATISTIKY PRE LOG ---
+        // Tu server spočíta priemernú úspešnosť/kroky cez všetky voľné políčka naraz.
         double suma_hodnot = 0;
         int pocet_volnych = 0;
         for (int r = 0; r < shm->riadky; r++) {
@@ -454,12 +533,15 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd, int socke
             globalny_priemer = 0.0; // no free cells -> zero average
         }
 
+        // --- 5. INFORMOVANIE KLIENTA ---
         // Po dokončení jednej replikácie: pošli notifikáciu klientovi a krátky log cez pipe
         // Aktualizujeme ukazovateľ aktualne_replikacie pod mutexom pre konzistenciu.
-        sem_wait(&shm->shm_mutex);
-        shm->aktualne_replikacie = r_id; // index tej prave dokončenej replikacie (0-based)
-        sem_post(&shm->shm_mutex);
+        sem_wait(&shm->shm_mutex); //ZAMKNUTIE
+        // update completed replicas (1-based)
+        shm->aktualne_replikacie = r_id + 1; // pocet prave dokoncenych replikacii
+        sem_post(&shm->shm_mutex); //ODOMKNUTIE
 
+        // Formátovanie správy podľa aktuálneho režimu (Percentá / Kroky)
         char msg[128];
         if (*p_rezim_logovania == 0) {
             // percentový režim -> zabezpečíme, že výsledok bude v rozmedzí 0..100
@@ -484,7 +566,7 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd, int socke
 
         // Prebudíme klienta, aby vykreslil aktuálny stav (vrátane aktualne_replikacie)
         sem_post(&shm->data_ready);
-        // Krátke pozastavenie, aby mal používateľ čas prečítať notifikáciu / update
+        // usleep(100) uvoľní procesor, aby klient stihol prekresliť terminál bez lagovania
         //cim menej casu tak rychlejsie pojde program
         usleep(100);
     }
@@ -496,21 +578,23 @@ void vykonaj_sumarnu_simulaciu(ZdielaneData_t* shm, int pipe_write_fd, int socke
  * módu (interaktívny/sumárny) a finálne uloženie výsledkov.
  * * @param shm Smerník na zdieľanú pamäť.
  */
-//TODO mozno to treba upravit tak aby som si vybral umiestnenie chodza a ukazal cestu do ciela
 void spusti_server(ZdielaneData_t* shm, int pipe_write_fd, int socket_fd) {
     int rezim_logovanie = 0; //0 = percenta 1 = kroky
     printf("[SERVER] Čakám na inicializáciu menu klientom...\n");
 
-    // Aktívne čakanie na štart z menu
+    // --- 1. ČAKANIE NA KLIENTA (Polling) ---
+    // Server beží v nekonečnom cykle, kým v zdieľanej pamäti klient nenastaví SIM_INIT.
     while (shm->stav != SIM_INIT) {
         if (shm->stav == SIM_STOP_REQUESTED) return;
         usleep(10000);
     }
+    // Inicializácia generátora náhodných čísel aktuálnym časom
     srand(time(NULL));
 
     posli_log(pipe_write_fd, "SERVER: inicializujem svet...");
 
-    // Príprava sveta (načítanie/generovanie)
+    // --- 2. PRÍPRAVA MAPY ---
+    // Zavolá sa funkcia, ktorá buď načíta súbor alebo spustí BFS generátor.
     if (!inicializuj_svet_servera(shm)) {
         if (shm->stav != SIM_STOP_REQUESTED) {
             posli_log(pipe_write_fd, "Server: Chyba pri inicializacii sveta!");
@@ -518,6 +602,7 @@ void spusti_server(ZdielaneData_t* shm, int pipe_write_fd, int socket_fd) {
             posli_log(pipe_write_fd, "Server: Inicializacia zrusena pouzivatelom.");
         }
 
+        // Ak inicializácia zlyhá, musím korektne nastaviť stav a zobudiť klienta, aby nezamrzol.
         sem_wait(&shm->shm_mutex); // Zabezpečenie konzistencie stavu
         shm->stav = SIM_FINISHED;
         sem_post(&shm->shm_mutex);
@@ -526,11 +611,12 @@ void spusti_server(ZdielaneData_t* shm, int pipe_write_fd, int socket_fd) {
         return;
     }
 
+    // --- 3. SPUSTENIE SIMULÁCIE ---
     posli_log(pipe_write_fd, "Server: Svet pripraveny, startujem simulaciu.");
-    shm->stav = SIM_RUNNING;
+    shm->stav = SIM_RUNNING; // Oficiálne spúšťam výpočty
 
     if (shm->mod == INTERAKTIVNY) {
-        // Spustenie jednej trajektórie zo stredu mapy
+        // MOD 0: Sledujem jedného chodca zo stredu mapy
         posli_log(pipe_write_fd, "Server: Bezi interaktivny mod...");
         int start_r = shm->riadky / 2;
         int start_s = shm->stlpece / 2;
@@ -539,26 +625,27 @@ void spusti_server(ZdielaneData_t* shm, int pipe_write_fd, int socket_fd) {
         simuluj_chodzu_z_policka(shm, start_r, start_s);
         usleep(30000); // Krátka pauza na doznenie vizualizácie
     } else {
-        // Hromadný výpočet pre všetky políčka
+        // MOD 1: Hromadný matematický výpočet (tisíce replikácií pre každé políčko)
         posli_log(pipe_write_fd, "Server: Bezi vypocet sumarneho modu...");
         vykonaj_sumarnu_simulaciu(shm, pipe_write_fd, socket_fd, &rezim_logovanie);
     }
 
-    // Finálne uloženie dát a upratovanie stavu
+    // --- 4. UKONČENIE A EXPORT ---
+    // Ak simulácia dobehla do konca a nebola násilne prerušená:
     if (shm->stav != SIM_STOP_REQUESTED) {
         posli_log(pipe_write_fd, "Server: Ukladam vysledky do suboru...");
-        uloz_vysledky_do_suboru(shm);
-        // Simulácia dobehla prirodzene -> nastavíme FINISHED
+        uloz_vysledky_do_suboru(shm); // Automatické uloženie po úspešnom behu
+        // Simulácia dobehla prirodzene -> nastavím FINISHED
         sem_wait(&shm->shm_mutex);
         shm->stav = SIM_FINISHED;
         sem_post(&shm->shm_mutex);
         posli_log(pipe_write_fd, "Server: Simulacia uspesne ukoncena.");
     } else {
+        // Ak používateľ stlačil 'q' počas simulácie
         posli_log(pipe_write_fd, "Server: Simulacia prerusena pouzivatelom.");
-        // Stav zostáva SIM_STOP_REQUESTED, klient sa vráti do menu
     }
 
-    // Prebudenie klienta pre finálne zobrazenie alebo pre návrat do menu
+    // Finálny signál pre klienta (napr. na prekreslenie poslednej štatistiky)
     sem_post(&shm->data_ready);
     printf("[SERVER] Simulácia ukončená.\n");
 }
