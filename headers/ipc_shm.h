@@ -10,7 +10,7 @@
 
 #include "common.h"
 
-#define SHM_KEY 1234 //nahodny kluc pre identifikaciu pamate
+#define SHM_KEY 1181 //nahodny kluc pre identifikaciu pamate
 /**
  * @brief Režim simulácie (interaktívny alebo sumárny).
  */

@@ -33,6 +33,8 @@ ZdielaneData_t* shm_create_and_attach(key_t key) {
     int novo_vytvorena = 0;
 
     // 1. POKUS O EXKLUZÍVNE VYTVORENIE
+    //EXCL - funguje iba vtedy ak je prvy, ak existuje vyhodi chybu
+    //CREAT - ak eneexistuje tak vytvor ho ak existuje tak ma pripoj ku nemu
     // IPC_CREAT | IPC_EXCL spôsobí, že ak segment s daným kľúčom už existuje, shmget vráti chybu.
     // To povie: "Ty si ten, kto musí inicializovať semafory!"
     shm_id = shmget(key, sizeof(ZdielaneData_t), IPC_CREAT | IPC_EXCL | 0666);

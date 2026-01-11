@@ -25,7 +25,7 @@ void posli_log(int pipe_write_fd, const char* sprava) {
 
     // DÔLEŽITÉ: '+ 1' pridávam preto, aby som preniesol aj ukončovací znak '\0' (null-terminator).
     // Ak by som ho nepreniesol, klient by nevedel, kde reťazec končí a pri pokuse o výpis
-    // by mohol vypísať náhodné "smetie" z pamäte.
+    // by mohol vypísať náhodné "smeti" z pamäte.
     write(pipe_write_fd, sprava, strlen(sprava) + 1);
 }
 

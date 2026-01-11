@@ -31,7 +31,7 @@
  * @return 0 pri úspechu, nenulový kód pri chybe.
  */
 int main() {
-    key_t key = 1234; // Unikátny kľúč pre zdieľanú pamäť
+    key_t key = 1181; // Unikátny kľúč pre zdieľanú pamäť
     int pipe_fd[2]; // Deskriptory pre anonymnú rúru (0: čítanie, 1: zápis)
 
     // --- 1. PRÍPRAVA INFRAŠTRUKTÚRY ---
